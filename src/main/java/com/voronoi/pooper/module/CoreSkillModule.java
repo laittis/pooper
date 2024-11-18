@@ -23,6 +23,21 @@ public class CoreSkillModule extends MyModule {
         registerSkillConcealTrigger();
 
         // TODO: Kata, Focus
+
+        // Register command triggers
+        registerSkillReportCommandTrigger();
+    }
+
+    private void registerSkillReportCommandTrigger() {
+        registerTrigger(new MyTrigger(
+                "skillReport",
+                "pooper skill report - toggles skill report on/off",
+                "^pooper skill report$",
+                (batClientPlugin, matcher) -> {
+                    SkillTracker.toggleSkillReport();
+                },
+                true, true, false, TriggerType.COMMAND
+        ));
     }
 
     private void registerSkillConcealTrigger() {

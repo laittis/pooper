@@ -27,4 +27,12 @@ public class MessageManager {
             System.err.println("Plugin instance not set in MessageManager.");
         }
     }
+
+    public void reportMessage(String report) {
+        if (plugin != null) {
+            plugin.getClientGUI().doCommand("@@party report " + report);
+        } else {
+            System.err.println("Plugin instance not set in MessageManager.");
+        }
+    }
 }

@@ -9,6 +9,7 @@ public class SkillTracker {
     private static boolean skillInProgress = false;
     private static String currentSkill = null;
     private static String currentTarget = null;
+    private static boolean reportSkill = false;
 
     public static void onSkillStart() {
         skillStartTime = System.currentTimeMillis();
@@ -18,6 +19,7 @@ public class SkillTracker {
         String message = TextUtil.BOLD + TextUtil.YELLOW + " --- SKILL START --- "  + TextUtil.RESET
                 + " (" + TextUtil.YELLOW + skillCount + TextUtil.RESET + ")";
         MessageManager.getInstance().printMessage(message);
+
     }
 
     public static void onSkillEnd() {
@@ -55,6 +57,14 @@ public class SkillTracker {
         }
 
         MessageManager.getInstance().printMessage(message);
+
+        if (reportSkill) {
+            String report = currentSkill;
+            if (currentTarget != null) {
+                report += " -> " + currentTarget;
+            }
+            MessageManager.getInstance().reportMessage(report);
+        }
     }
 
     public static void reset() {
@@ -69,6 +79,12 @@ public class SkillTracker {
             String message = TextUtil.BOLD + TextUtil.GREEN + " - skill concealed - "  + TextUtil.RESET;
             MessageManager.getInstance().printMessage(message);
         }
+    }
+
+    public static void toggleSkillReport() {
+        reportSkill = !reportSkill;
+        String message = "Skill report is now " + (reportSkill ? TextUtil.BOLD + TextUtil.GREEN + "ON" + TextUtil.RESET : TextUtil.BOLD + TextUtil.RED + "OFF" + TextUtil.RESET);
+        MessageManager.getInstance().printMessage(message);
     }
 }
 

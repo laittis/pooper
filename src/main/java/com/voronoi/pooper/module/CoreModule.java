@@ -18,7 +18,7 @@ public class CoreModule extends MyModule {
         registerTrigger(new MyTrigger(
                 "pooperCommand",
                 "Handles the main 'pooper' command and its subcommands.",
-                "^pooper(?:\\s+(\\w+)(?:\\s+(\\w+))?)?$",
+                "^pooper(?:\\s+(help|enable|disable)(?:\\s+(\\w+))?)?$",
                 (batClientPlugin, matcher) -> {
                     String subCommand = matcher.group(1);
                     String moduleName = matcher.group(2);
@@ -52,9 +52,6 @@ public class CoreModule extends MyModule {
                         } else {
                             clientGUI.printText(PluginMain.PLUGIN_NAME, "Specify a module to disable.\n");
                         }
-                    } else {
-                        clientGUI.printText(PluginMain.PLUGIN_NAME, "Unknown command: " + subCommand + "\n");
-                        displayHelp(clientGUI);
                     }
                 },
                 true, // isAction
@@ -70,7 +67,7 @@ public class CoreModule extends MyModule {
         clientGUI.printText(PluginMain.PLUGIN_NAME, "pooper help <module> - Display help for a specific module\n");
         clientGUI.printText(PluginMain.PLUGIN_NAME, "pooper enable <module> - Enable a module\n");
         clientGUI.printText(PluginMain.PLUGIN_NAME, "pooper disable <module> - Disable a module\n");
-        clientGUI.printText(PluginMain.PLUGIN_NAME, "Available module:\n");
+        clientGUI.printText(PluginMain.PLUGIN_NAME, "Available modules:\n");
 
         for (MyModule module : ModuleManager.getInstance().getModules()) {
             String status = module.isEnabled() ? "[Enabled]" : "[Disabled]";

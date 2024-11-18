@@ -3,6 +3,9 @@ package com.voronoi.pooper.tracker;
 import com.voronoi.pooper.manager.MessageManager;
 import com.voronoi.pooper.util.TextUtil;
 
+import java.util.ArrayList;
+import java.util.List;
+
 public class SpellTracker {
     private static long spellStartTime;
     private static int spellCount = 0;
@@ -10,6 +13,18 @@ public class SpellTracker {
     private static String currentSpell = null;
     private static String currentTarget = null;
     private static boolean hasCeremony = false;
+    private static int currentRound = 0;
+    private static boolean reportSpell = false;
+
+    // TODO: Hardcoded list, should be configurable and loadable from a file
+    // Correctly instantiate the list using ArrayList
+    private static final List<String> nonReportableSpells = new ArrayList<>();
+
+    // Static initializer block to populate the list
+    static {
+        nonReportableSpells.add("spider demon conjuration");
+        nonReportableSpells.add("cure light wounds");
+    }
 
     public static void setCeremony(boolean ceremony) {
         hasCeremony = ceremony;
@@ -82,6 +97,8 @@ public class SpellTracker {
         spellStartTime = 0;
         currentSpell = null;
         currentTarget = null;
+        hasCeremony = false;
+        currentRound = 0;
     }
 
     public static void onSpellRounds(String spell, String rounds) {
@@ -94,8 +111,17 @@ public class SpellTracker {
             message += " [" + TextUtil.YELLOW + roundCount + TextUtil.RESET + "]";
         }
         MessageManager.getInstance().printMessage(message);
+        currentRound = roundCount;
 
         // We could add reporting of rounds here to party report channel when rounds hit some nubmer, but what the heck
+        if (reportSpell && roundCount > 0 && roundCount < 3) {
+            // Normalize spell name to lower case for consistent comparison
+            String spellLower = spell.toLowerCase();
+            if (!nonReportableSpells.contains(spellLower)) {
+                String report = spell + " in " + roundCount;
+                MessageManager.getInstance().reportMessage(report);
+            }
+        }
     }
 
     public static void onSpellConceal() {
@@ -103,6 +129,12 @@ public class SpellTracker {
             String message = TextUtil.BOLD + TextUtil.GREEN + " - spell concealed - " + TextUtil.RESET;
             MessageManager.getInstance().printMessage(message);
         }
+    }
+
+    public static void toggleSpellReport() {
+        reportSpell = !reportSpell;
+        String message = "Spell report is now " + (reportSpell ? TextUtil.BOLD + TextUtil.GREEN + "ON" + TextUtil.RESET : TextUtil.BOLD + TextUtil.RED + "OFF" + TextUtil.RESET);
+        MessageManager.getInstance().printMessage(message);
     }
 }
 

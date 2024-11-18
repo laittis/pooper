@@ -23,6 +23,21 @@ public class CoreSpellModule extends MyModule {
         registerCastInfoTrigger();
         registerSpellRoundsTrigger();
         registerSpellConcealTrigger();
+
+        // Register command triggers
+        registerSpellReportCommandTrigger();
+    }
+
+    private void registerSpellReportCommandTrigger() {
+        registerTrigger(new MyTrigger(
+                "spellReport",
+                "pooper spell report - toggles spell report on/off",
+                "^pooper spell report$",
+                (batClientPlugin, matcher) -> {
+                    SpellTracker.toggleSpellReport();
+                },
+                true, true, false, TriggerType.COMMAND
+        ));
     }
 
     private void registerSpellConcealTrigger() {
