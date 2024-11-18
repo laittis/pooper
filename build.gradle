@@ -1,0 +1,51 @@
+plugins {
+    id 'java'
+}
+
+group = 'com.voronoi'
+version = '1.0-SNAPSHOT'
+
+// Set Java compatibility
+java {
+    toolchain {
+        languageVersion = JavaLanguageVersion.of(8)
+    }
+}
+
+// Define the task to generate version.properties file
+tasks.register('generateVersionProperties') {
+    doLast {
+        def propertiesFile = file("$buildDir/generated-resources/version.properties")
+        propertiesFile.parentFile.mkdirs()
+        propertiesFile.text = "version=${version}\n"
+    }
+}
+
+// Add the generated resources to the resources directory
+sourceSets {
+    main {
+        resources {
+            srcDir "$buildDir/generated-resources"
+        }
+    }
+}
+
+// Make the 'generateVersionProperties' task run before the 'processResources' task
+tasks.named('processResources') {
+    dependsOn(generateVersionProperties)
+}
+
+repositories {
+    mavenCentral()
+}
+
+dependencies {
+    implementation files('lib/bat_interfaces.jar')
+
+    testImplementation platform('org.junit:junit-bom:5.10.0')
+    testImplementation 'org.junit.jupiter:junit-jupiter'
+}
+
+test {
+    useJUnitPlatform()
+}
