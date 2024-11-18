@@ -9,13 +9,15 @@ import java.util.List;
 import java.util.regex.Matcher;
 
 public class TriggerProcessor {
-    private final BatClientPlugin batClientPlugin;
-
-    public TriggerProcessor(BatClientPlugin batClientPlugin) {
-        this.batClientPlugin = batClientPlugin;
+    // Singleton
+    private TriggerProcessor() {}
+    private static final TriggerProcessor instance = new TriggerProcessor();
+    public static TriggerProcessor getInstance() {
+        return instance;
     }
 
-    public String processCommandTrigger(String input) {
+
+    public String processCommandTrigger(BatClientPlugin batClientPlugin, String input) {
         List<MyTrigger> triggers = ModuleManager.getInstance().getAllEnabledTriggers(TriggerType.COMMAND);
 
         for (MyTrigger trigger : triggers) {
@@ -30,7 +32,7 @@ public class TriggerProcessor {
         return input; // Return original input if no trigger matched or not gagged
     }
 
-    public ParsedResult processScreenTrigger(ParsedResult parsedResult) {
+    public ParsedResult processScreenTrigger(BatClientPlugin batClientPlugin, ParsedResult parsedResult) {
         List<MyTrigger> triggers = ModuleManager.getInstance().getAllEnabledTriggers(TriggerType.SCREEN);
 
         for (MyTrigger trigger : triggers) {
@@ -39,8 +41,9 @@ public class TriggerProcessor {
             if (matcher.find()) {
                 trigger.getTriggerBody().body(batClientPlugin, matcher);
                 if (trigger.isGag()) {
-                    parsedResult.setOriginalText("");
-                    return parsedResult;
+                    parsedResult.setStrippedText(""); // Gag the parsed result
+                    parsedResult.setOriginalText(""); // Gag the parsed result
+                    return null; // Gag the parsed result
                 }
             }
         }

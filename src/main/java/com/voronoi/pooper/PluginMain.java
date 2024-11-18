@@ -38,7 +38,7 @@ public class PluginMain extends BatClientPlugin implements ActionListener, BatCl
         MessageManager.getInstance().setPlugin(this);
 
         // Trigger management
-        triggerProcessor = new TriggerProcessor(this);
+        triggerProcessor = TriggerProcessor.getInstance();
         ModuleManager moduleManager = ModuleManager.getInstance();
 
         // Initialize and register module
@@ -88,12 +88,12 @@ public class PluginMain extends BatClientPlugin implements ActionListener, BatCl
 
     @Override
     public String trigger(String s) {
-        return triggerProcessor.processCommandTrigger(s);
+        return triggerProcessor.processCommandTrigger(this, s);
     }
 
     @Override
     public ParsedResult trigger(ParsedResult parsedResult) {
-        return triggerProcessor.processScreenTrigger(parsedResult);
+        return triggerProcessor.processScreenTrigger(this, parsedResult);
     }
 
     @Override
