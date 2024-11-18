@@ -40,4 +40,34 @@ public class TextUtil {
     public static long formatTime(long time){
         return (System.currentTimeMillis()-time)/1000;
     }
+
+    public static String formatDuration(long duration) {
+        // Calculate time components
+        long hours = duration / 3600000;
+        long remainingAfterHours = duration % 3600000;
+
+        long minutes = remainingAfterHours / 60000;
+        long remainingAfterMinutes = remainingAfterHours % 60000;
+
+        long seconds = remainingAfterMinutes / 1000;
+        long milliseconds = remainingAfterMinutes % 1000;
+
+        // Efficiently build the string
+        StringBuilder sb = new StringBuilder(16); // Rough estimate of needed capacity
+        if (hours > 0) {
+            sb.append(hours).append("h");
+        }
+        if (minutes > 0) {
+            sb.append(minutes).append("m");
+        }
+        if (seconds > 0) {
+            sb.append(seconds).append("s");
+        }
+        if (milliseconds > 0) {
+            sb.append(milliseconds).append("ms");
+        }
+
+        return sb.toString();
+    }
+
 }

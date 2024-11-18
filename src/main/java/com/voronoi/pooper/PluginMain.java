@@ -6,6 +6,8 @@ import com.voronoi.pooper.manager.MessageManager;
 import com.voronoi.pooper.manager.ModuleManager;
 import com.voronoi.pooper.manager.TriggerProcessor;
 import com.voronoi.pooper.module.CoreModule;
+import com.voronoi.pooper.module.CoreSkillModule;
+import com.voronoi.pooper.module.CoreSpellModule;
 import com.voronoi.pooper.util.TextUtil;
 
 import java.awt.event.ActionEvent;
@@ -44,6 +46,13 @@ public class PluginMain extends BatClientPlugin implements ActionListener, BatCl
         coreModule.init();
         moduleManager.registerModule(coreModule);
 
+        MyModule CoreSkillModule = new CoreSkillModule();
+        CoreSkillModule.init();
+        moduleManager.registerModule(CoreSkillModule);
+
+        MyModule CoreSpellModule = new CoreSpellModule();
+        CoreSpellModule.init();
+        moduleManager.registerModule(CoreSpellModule);
 
         this.getClientGUI().printText("generic", TextUtil.colorText("--- Loaded " + getName() + " ---\n", TextUtil.GREEN));
     }

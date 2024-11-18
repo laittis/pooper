@@ -17,36 +17,14 @@ public class MessageManager {
         this.plugin = plugin;
     }
 
-    public void printMessage(String message, String color) {
+    public void printMessage(String message) {
         if (plugin != null) {
-            plugin.getClientGUI().printText("generic", TextUtil.colorText(message, color));
+            plugin.getClientGUI().printText(
+                    "generic",
+                    TextUtil.BOLD + TextUtil.WHITE + "Pooper: " + TextUtil.RESET + message + "\n"
+            );
         } else {
             System.err.println("Plugin instance not set in MessageManager.");
         }
-    }
-
-    public void printStatusMessage(String message, String color) {
-        if (plugin != null) {
-            plugin.getClientGUI().printText("generic", TextUtil.colorText("---- ", TextUtil.WHITE) + TextUtil.colorText(message, color) + TextUtil.colorText(" ----\n", TextUtil.WHITE));
-        } else {
-            System.err.println("Plugin instance not set in MessageManager.");
-        }
-    }
-
-    public void printEventMessage(String message, String color) {
-        if (plugin != null) {
-            plugin.getClientGUI().printText("generic", TextUtil.colorText("### ", TextUtil.WHITE) + TextUtil.colorText(message, color) +"\n");
-        } else {
-            System.err.println("Plugin instance not set in MessageManager.");
-        }
-    }
-
-
-    public void printError(String message) {
-        printMessage(message, TextUtil.RED);
-    }
-
-    public void printInfo(String message) {
-        printMessage(message, TextUtil.GREEN);
     }
 }
