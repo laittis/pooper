@@ -4,6 +4,7 @@ import com.mythicscape.batclient.interfaces.*;
 import com.voronoi.pooper.bean.MyModule;
 import com.voronoi.pooper.manager.MessageManager;
 import com.voronoi.pooper.manager.ModuleManager;
+import com.voronoi.pooper.manager.SettingsManager;
 import com.voronoi.pooper.manager.TriggerProcessor;
 import com.voronoi.pooper.module.CoreModule;
 import com.voronoi.pooper.module.CoreSkillModule;
@@ -54,6 +55,9 @@ public class PluginMain extends BatClientPlugin implements ActionListener, BatCl
         CoreSpellModule.init();
         moduleManager.registerModule(CoreSpellModule);
 
+        // Load all modules
+        SettingsManager.getInstance().load(getBaseDirectory());
+
         this.getClientGUI().printText("generic", TextUtil.colorText("--- Loaded " + getName() + " ---\n", TextUtil.GREEN));
     }
 
@@ -99,6 +103,7 @@ public class PluginMain extends BatClientPlugin implements ActionListener, BatCl
     @Override
     public void clientExit() {
         // Clean up and save state.
+        SettingsManager.getInstance().save(getBaseDirectory());
     }
 
     @Override

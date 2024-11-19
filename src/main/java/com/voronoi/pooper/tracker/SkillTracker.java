@@ -1,17 +1,27 @@
 package com.voronoi.pooper.tracker;
 
+import com.voronoi.pooper.annotation.Save;
+import com.voronoi.pooper.bean.Tracker;
 import com.voronoi.pooper.manager.MessageManager;
 import com.voronoi.pooper.util.TextUtil;
 
-public class SkillTracker {
-    private static long skillStartTime;
-    private static int skillCount = 0;
-    private static boolean skillInProgress = false;
-    private static String currentSkill = null;
-    private static String currentTarget = null;
-    private static boolean reportSkill = false;
+public class SkillTracker extends Tracker {
+    private long skillStartTime;
+    private boolean skillInProgress = false;
+    private String currentSkill = null;
+    private String currentTarget = null;
 
-    public static void onSkillStart() {
+    @Save
+    private int skillCount = 0;
+
+    @Save
+    private boolean reportSkill = false;
+
+    public SkillTracker() {
+        super();
+    }
+
+    public void onSkillStart() {
         skillStartTime = System.currentTimeMillis();
         skillCount++;
         skillInProgress = true;
@@ -22,7 +32,7 @@ public class SkillTracker {
 
     }
 
-    public static void onSkillEnd() {
+    public void onSkillEnd() {
         long duration = System.currentTimeMillis() - skillStartTime;
         reset();
 
@@ -32,21 +42,21 @@ public class SkillTracker {
         MessageManager.getInstance().printMessage(message);
     }
 
-    public static void onSkillInterrupt() {
+    public void onSkillInterrupt() {
         reset();
 
         String message = TextUtil.BGRED + " --- SKILL INTERRUPTED --- " + TextUtil.RESET;
         MessageManager.getInstance().printMessage(message);
     }
 
-    public static void onSkillStopped() {
+    public void onSkillStopped() {
         reset();
 
         String message = TextUtil.BGRED + " --- SKILL STOPPED --- " + TextUtil.RESET;
         MessageManager.getInstance().printMessage(message);
     }
 
-    public static void setSkill(String skill, String target) {
+    public void setSkill(String skill, String target) {
         skillInProgress = true;
         currentSkill = skill;
         currentTarget = target;
@@ -67,21 +77,22 @@ public class SkillTracker {
         }
     }
 
-    public static void reset() {
+    @Override
+    public void reset() {
         skillStartTime = 0;
         skillInProgress = false;
         currentSkill = null;
         currentTarget = null;
     }
 
-    public static void onSkillConceal() {
+    public void onSkillConceal() {
         if (skillInProgress) {
             String message = TextUtil.BOLD + TextUtil.GREEN + " - skill concealed - "  + TextUtil.RESET;
             MessageManager.getInstance().printMessage(message);
         }
     }
 
-    public static void toggleSkillReport() {
+    public void toggleSkillReport() {
         reportSkill = !reportSkill;
         String message = "Skill report is now " + (reportSkill ? TextUtil.BOLD + TextUtil.GREEN + "ON" + TextUtil.RESET : TextUtil.BOLD + TextUtil.RED + "OFF" + TextUtil.RESET);
         MessageManager.getInstance().printMessage(message);

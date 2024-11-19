@@ -37,10 +37,19 @@ public class TextUtil {
         return BOLD+color+content+RESET;
     }
 
+    /** format time
+     * @param time time
+     * @return formatted string
+     */
     public static long formatTime(long time){
         return (System.currentTimeMillis()-time)/1000;
     }
 
+    /**
+     * format duration
+     * @param duration duration
+     * @return formatted string
+     */
     public static String formatDuration(long duration) {
         // Calculate time components
         long hours = duration / 3600000;

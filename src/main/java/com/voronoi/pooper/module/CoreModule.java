@@ -13,6 +13,9 @@ public class CoreModule extends MyModule {
         super("CoreModule", "Core commands for the Pooper plugin.");
     }
 
+    /**
+     * Initialize the module by registering triggers for the 'pooper' command and its subcommands.
+     */
     @Override
     public void init() {
         registerTrigger(new MyTrigger(
@@ -61,6 +64,11 @@ public class CoreModule extends MyModule {
         ));
     }
 
+    /**
+     * Display help for the 'pooper' command and its subcommands.
+     *
+     * @param clientGUI The client GUI to print the help message to.
+     */
     private void displayHelp(ClientGUI clientGUI) {
         clientGUI.printText(PluginMain.PLUGIN_NAME, TextUtil.colorText("--- Pooper Help ---\n", TextUtil.GREEN));
         clientGUI.printText(PluginMain.PLUGIN_NAME, "pooper help - Display this help message\n");
