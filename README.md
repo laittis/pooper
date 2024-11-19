@@ -19,3 +19,7 @@ It is designed to make the batmud clients output less poop and more like what on
 ## Features
 * Basic Skill and Spell triggers, formatting and reporting
 * Basic Combat triggers, formatting and reporting (WIP)
+
+## Links and References
+* [Hair's BatClient Triggers](http://flaprider.dyndns.org/~hair/batmud/batclient.html)
+* [BatMUD](http://www.bat.org)

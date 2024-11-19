@@ -1,0 +1,69 @@
+/*
+ * moonphase.bcs
+ *
+ * Shows phase of moon based on the day of the month from the 'time' command.
+ *
+ * Thanks to Kanis for sharing phase data.
+ *
+ */
+
+SCRIPT_NAME = "moonphase";
+SCRIPT_DESC = "Shows moon phase based on output from 'time' command";
+SCRIPT_OFF = false;
+
+// Variables to be able to use inline colors with clientGUI.printText
+String RESET 		= "\u001b[0m";
+String BOLD 		= "\u001b[1m";
+String BLACK 		= "\u001b[30m";
+String RED 		= "\u001b[31m";
+String GREEN 		= "\u001b[32m";
+String YELLOW 		= "\u001b[33m";
+String BLUE 		= "\u001b[34m";
+String MAGENTA 		= "\u001b[35m";
+String CYAN 		= "\u001b[36m";
+String WHITE 		= "\u001b[37m";
+String BGBLACK 		= "\u001b[40m";
+String BGRED 		= "\u001b[41m";
+String BGGREEN 		= "\u001b[42m";
+String BGYELLOW		= "\u001b[43m";
+String BGBLUE 		= "\u001b[44m";
+String BGMAGENTA	= "\u001b[45m";
+String BGCYAN 		= "\u001b[46m";
+String BGWHITE 		= "\u001b[47m";
+
+String HEADER = BOLD + YELLOW + "[" + RESET + YELLOW + "moonphase" + RESET + BOLD + YELLOW + "]: " + RESET;
+
+void bootup() {
+	triggerManager.newTrigger(101, "moonPhase",
+		"^Today is the ([0-9]*)([a-z]*) day of the ([0-9a-z]*) month \\(([A-z]*)\\) of the year ([0-9]*).$",
+		"$" + SCRIPT_NAME + ".moonPhase",true,false,false,null,Font.PLAIN);
+	clientGUI.printText("general", HEADER + BOLD + WHITE + "Moon phase helper loaded." + RESET + "\n");
+}
+
+void moonPhase() {
+	int _date = Integer.parseInt(vars.get(1));
+	String _moon;
+	String _time = vars.get(0).replaceAll("[\r\n]", "");
+	if (_date < 4) {
+		_moon = " (waning crescent moon)";
+	} else if (_date == 4) {
+		_moon = " (new moon)";
+	} else if (_date > 4 && _date < 8) {
+		_moon = " (waxing crescent moon)";
+	} else if (_date > 7 && _date < 14) {
+		_moon = " (first quarter moon)";
+	} else if (_date > 13 && _date < 18) {
+		_moon = " (waxing gibbous moon)";
+	} else if (_date == 18) {
+		_moon = " (full moon)";
+	} else if (_date > 18 && _date < 22) {
+		_moon = " (waning gibbous moon)";
+	} else if (_date > 21 && _date < 28) {
+		_moon = " (third quarter moon)";
+	} else if (_date == 28) {
+		_moon = " (waning crescent moon)";
+	}
+	clientGUI.printText("general", _time + BOLD + YELLOW + _moon + RESET + "\n", false);
+}
+
+

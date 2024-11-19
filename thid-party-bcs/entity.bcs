@@ -1,0 +1,142 @@
+SCRIPT_NAME = "riftwalker_counter";
+SCRIPT_DESC = "Tallies Riftwalker entity reputation and displays a number";
+SCRIPT_OFF = false;
+
+// This script takes output from 'gem entities' and counts up rep gained.
+// It also shows amount of rep gained (or lost) in this session, provided you have
+// 'initialized' it by doing 'gem entities' first so it gets an initial reading.
+// I'm no batclient guru but if you have any questions about this send me a tell
+// and I'll respond.
+// --Hair
+
+// global variable declarations
+// Please be aware, read through the comments and change things to reflect your character where it
+// says to change things.  If you do not do this, then this trigger will not work for you.
+
+// CHANGE THESE 5 VARIABLES NOW!!!!
+// If you do not change these 5 lines to reflect your entity names then the trigger will not
+// match correctly.
+
+String rift_fire_NAME="Fire";
+String rift_air_NAME="Air";
+String rift_water_NAME="Water";
+String rift_earth_NAME="Earth";
+String rift_magic_NAME="Magic";
+
+int rift_fire_rep=0;
+int rift_air_rep=0;
+int rift_water_rep=0;
+int rift_earth_rep=0;
+int rift_magic_rep=0;
+
+void bootup() {
+// This trig reads in the rep meter, gags the line, then sends
+// infos to function to do math and reprint meter line
+// Please note, this trig can be simplified by hardcoding the entity names into the trig, but this way you can
+// simply change the values in the above variables and reload the script.
+	triggerManager.newTrigger("entity_rep_grabber",
+		"^\\| ("+rift_fire_NAME+"|"+rift_air_NAME+"|"+rift_water_NAME+"|"+rift_earth_NAME+"|"+rift_magic_NAME+")([ ]*)\\| ([X]*)([O]*)([o]*)([!]*)([:]*)([,]*)([.]*) \\| (Pleased|Narked|Riled|Cross|ANGRY)([ ]*)\\|$",
+		"$"+SCRIPT_NAME+".entity_rep_grabber",true,false,false,null,Font.PLAIN);
+}
+
+void entity_rep_grabber()  {
+// Initialize rep bar counting variables
+	String entity_humour_color="";
+	String entity_diff_color="";
+	int entity_counter_hunk=0;
+	int entity_counter_tenk=0;
+	int entity_counter_onek=0;
+	int entity_counter_hund=0;
+	int entity_counter_tens=0;
+	int entity_counter_ones=0;
+	int entity_counter_diff=0;
+// Assign numeric value
+	entity_counter_hunk=vars.get(3).length()*100000;
+	entity_counter_tenk=vars.get(4).length()*10000;
+	entity_counter_onek=vars.get(5).length()*1000;
+	entity_counter_hund=vars.get(6).length()*100;
+	entity_counter_tens=vars.get(7).length()*10;
+	entity_counter_ones=vars.get(8).length();
+// Tally the results
+	entity_totalRep=entity_counter_hunk+entity_counter_tenk+entity_counter_onek+entity_counter_hund+entity_counter_tens+entity_counter_ones;
+// Set initial rep for session
+	if(rift_fire_rep==0) {
+		rift_fire_rep=entity_totalRep;
+	}
+	else if(rift_air_rep==0) {
+		rift_air_rep=entity_totalRep;
+	}
+	else if(rift_water_rep==0) {
+		rift_water_rep=entity_totalRep;
+	}
+	else if(rift_earth_rep==0) {
+		rift_earth_rep=entity_totalRep;
+	}
+	else if(rift_magic_rep==0) {
+		rift_magic_rep=entity_totalRep;
+	}
+	if(vars.get(1).equals(rift_fire_NAME)) {
+		entity_counter_diff=entity_totalRep-rift_fire_rep;
+		if(entity_counter_diff>=0) {
+			entity_diff_color="00FF00";
+		} else {
+			entity_diff_color="FF0000";
+		}
+	}
+	if(vars.get(1).equals(rift_air_NAME)) {
+		entity_counter_diff=entity_totalRep-rift_air_rep;
+		if(entity_counter_diff>=0) {
+			entity_diff_color="00FF00";
+		} else {
+			entity_diff_color="FF0000";
+		}
+	}
+	if(vars.get(1).equals(rift_water_NAME)) {
+		entity_counter_diff=entity_totalRep-rift_water_rep;
+		if(entity_counter_diff>=0) {
+			entity_diff_color="00FF00";
+		} else {
+			entity_diff_color="FF0000";
+		}
+	}
+	if(vars.get(1).equals(rift_earth_NAME)) {
+		entity_counter_diff=entity_totalRep-rift_earth_rep;
+		if(entity_counter_diff>=0) {
+			entity_diff_color="00FF00";
+		} else {
+			entity_diff_color="FF0000";
+		}
+	}
+	if(vars.get(1).equals(rift_magic_NAME)) {
+		entity_counter_diff=entity_totalRep-rift_magic_rep;
+		if(entity_counter_diff>=0) {
+			entity_diff_color="00FF00";
+		} else {
+			entity_diff_color="FF0000";
+		}
+	}
+
+// Get entity humour and color it
+	if(vars.get(10).equals("Pleased")) {
+		entity_humour_color="00FF00";
+	}
+	else if(vars.get(10).equals("Narked")) {
+		entity_humour_color="008000";
+	}
+	else if(vars.get(10).equals("Riled")) {
+		entity_humour_color="FFFF00";
+	}
+	else if(vars.get(10).equals("Cross")) {
+		entity_humour_color="808000";
+	}
+	else if(vars.get(10).equals("ANGRY")) {
+		entity_humour_color="FF0000";
+	}
+// Print the results
+	clientGUI.printText("general", "| "+vars.get(1)+vars.get(2)+"| "+vars.get(3)+vars.get(4)+vars.get(5)+vars.get(6)+vars.get(7)+vars.get(8)+vars.get(9)+" | ");
+	clientGUI.printText("general", vars.get(10), entity_humour_color);
+	clientGUI.printText("general", vars.get(11)+"| ("+entity_totalRep+") (");
+	clientGUI.printText("general", ""+entity_counter_diff+"", entity_diff_color);
+	clientGUI.printText("general", ")\n");
+}
+

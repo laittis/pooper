@@ -1,0 +1,579 @@
+SCRIPT_NAME = "essence";
+SCRIPT_DESC = "Chart to keep track of essence gains and number of blasts in mage staff.";
+SCRIPT_OFF = false;
+
+import java.text.SimpleDateFormat;
+import java.util.Date;
+import java.util.regex.*;
+import java.text.DecimalFormat;
+/////////////////////////////////////////////////////////////////////////////////////////
+//
+// essence.bcs
+// Written by Hair@BatMUD
+// 12 Febuary, 2018
+// Updated 1 November, 2020 to fix timing issue
+// Updated 12 November, 2021 to fix change in output from 'skills' command
+
+// Please be aware that essence progress shown and date of last essence gain will be
+// incorrect until you see your next gain.  At that point the percentage to next essence
+// will be reasonably correct.
+
+// *** IMPORTANT ***
+// Change this path line to reflect your batclient scripts directory.
+// Windows users, please note the use of the forward slash '/' instead
+// of the backslash '\' character to divide directory names.  USE THE
+// FORWARD SLASH
+//
+// You will also need to "set pipe_commands off" when logged into BatMUD
+
+String _Path = clientGUI.getBaseDirectory() + "/scripts/essence.dat";
+
+int essence_acid = 0;
+int essence_aspx = 0;
+int essence_cold = 0;
+int essence_elec = 0;
+int essence_fire = 0;
+int essence_mana = 0;
+int essence_pois = 0;
+int essence_acid_casts = 0;
+int essence_aspx_casts = 0;
+int essence_cold_casts = 0;
+int essence_elec_casts = 0;
+int essence_fire_casts = 0;
+int essence_mana_casts = 0;
+int essence_pois_casts = 0;
+String essence_type = "";
+String essence_acid_date = "0000/00/00 00:00";
+String essence_aspx_date = "0000/00/00 00:00";
+String essence_cold_date = "0000/00/00 00:00";
+String essence_elec_date = "0000/00/00 00:00";
+String essence_fire_date = "0000/00/00 00:00";
+String essence_mana_date = "0000/00/00 00:00";
+String essence_pois_date = "0000/00/00 00:00";
+String _essCommand;
+boolean essence_gained = false;
+
+void bootup() {
+	triggerManager.newTrigger("ess_acid_blast",
+	"^You watch with self-pride as your acid blast hits (.*)",
+	"$essence.ess_add_single acid",false,false,false,null,Font.PLAIN);
+	triggerManager.newTrigger("ess_aspx_blast",
+	"^You watch with self-pride as your blast vacuum hits (.*)",
+	"$essence.ess_add_single aspx",false,false,false,null,Font.PLAIN);
+	triggerManager.newTrigger("ess_cold_blast",
+	"^You watch with self-pride as your cold ray hits (.*)",
+	"$essence.ess_add_single cold",false,false,false,null,Font.PLAIN);
+	triggerManager.newTrigger("ess_elec_blast",
+	"^You watch with self-pride as your electrocution hits (.*)",
+	"$essence.ess_add_single elec",false,false,false,null,Font.PLAIN);
+	triggerManager.newTrigger("ess_fire_blast",
+	"^You watch with self-pride as your lava blast hits (.*)",
+	"$essence.ess_add_single fire",false,false,false,null,Font.PLAIN);
+	triggerManager.newTrigger("ess_mana_blast",
+	"^You watch with self-pride as your golden arrow hits (.*)",
+	"$essence.ess_add_single mana",false,false,false,null,Font.PLAIN);
+	triggerManager.newTrigger("ess_pois_blast",
+	"^You watch with self-pride as your summon carnal spores hits (.*)",
+	"$essence.ess_add_single pois",false,false,false,null,Font.PLAIN);
+	triggerManager.newTrigger("ess_acid_area",
+	"^You hit (.*) with your acid storm.$",
+	"$essence.ess_add_area acid",false,false,false,null,Font.PLAIN);
+	triggerManager.newTrigger("ess_aspx_area",
+	"^You hit (.*) with your vacuum globe.$",
+	"$essence.ess_add_area aspx",false,false,false,null,Font.PLAIN);
+	triggerManager.newTrigger("ess_cold_area",
+	"^You hit (.*) with your hailstorm.$",
+	"$essence.ess_add_area cold",false,false,false,null,Font.PLAIN);
+	triggerManager.newTrigger("ess_elec_area",
+	"^You hit (.*) with your lightning storm.$",
+	"$essence.ess_add_area elec",false,false,false,null,Font.PLAIN);
+	triggerManager.newTrigger("ess_fire_area",
+	"^You hit (.*) with your lava storm.$",
+	"$essence.ess_add_area fire",false,false,false,null,Font.PLAIN);
+	triggerManager.newTrigger("ess_mana_area",
+	"^You hit (.*) with your magic eruption.$",
+	"$essence.ess_add_area mana",false,false,false,null,Font.PLAIN);
+	triggerManager.newTrigger("ess_pois_area",
+	"^You hit (.*) with your killing cloud.$",
+	"$essence.ess_add_area pois",false,false,false,null,Font.PLAIN);
+	triggerManager.newTrigger("ess_essence_gained",
+	"^You feel your skills in handling elemental forces improve.$",
+	"$essence.ess_essence_gained",false,false,false,null,Font.PLAIN);
+	clientGUI.printText("general", "LOADED: essence ('$essence.help' for more info)\n", "ffff00");
+	essence_load();
+}
+
+// Add 1 to current blast type
+void ess_add_blast(_eType) {
+	essence_type = _eType;
+	if(essence_type.equals("acid")) {
+		++essence_acid_casts;
+	}
+	else if(essence_type.equals("aspx")) {
+		++essence_aspx_casts;
+	}
+	else if(essence_type.equals("cold")) {
+		++essence_cold_casts;
+	}
+	else if(essence_type.equals("elec")) {
+		++essence_elec_casts;
+	}
+	else if(essence_type.equals("fire")) {
+		++essence_fire_casts;
+	}
+	else if(essence_type.equals("mana")) {
+		++essence_mana_casts;
+	}
+	else if(essence_type.equals("pois")) {
+		++essence_pois_casts;
+	}
+	essence_save();
+}
+
+void ess_add_single() {
+	ess_add_blast(argument);
+	if (essence_gained) {
+		ess_do_essence_write();
+	}
+}
+
+// Area spells earn 2 essence
+void ess_add_area() {
+	ess_add_blast(argument);
+	ess_add_blast(argument);
+	if (essence_gained) {
+		ess_do_essence_write();
+	}
+}
+
+// Set flag for essence gain
+void ess_essence_gained() {
+	essence_gained = true;
+}
+
+// Record date and alert when essence has been gained
+void ess_do_essence_write() {
+	String _essColor = "c0c0c0";
+	Date date = new Date();
+	SimpleDateFormat df = new SimpleDateFormat("yyyy/MM/dd HH:mm");
+	if(essence_type.equals("acid")) {
+		essence_acid_date = df.format(date);
+		essence_acid_casts = 0;
+		_essColor = "00ff00";
+	}
+	else if(essence_type.equals("aspx")) {
+		essence_aspx_date = df.format(date);
+		essence_aspx_casts = 0;
+		_essColor = "ff00ff";
+	}
+	else if(essence_type.equals("cold")) {
+		essence_cold_date = df.format(date);
+		essence_cold_casts = 0;
+		_essColor = "0000ff";
+	}
+	else if(essence_type.equals("elec")) {
+		essence_elec_date = df.format(date);
+		essence_elec_casts = 0;
+		_essColor = "00ffff";
+	}
+	else if(essence_type.equals("fire")) {
+		essence_fire_date = df.format(date);
+		essence_fire_casts = 0;
+		_essColor = "ff0000";
+	}
+	else if(essence_type.equals("mana")) {
+		essence_mana_date = df.format(date);
+		essence_mana_casts = 0;
+		_essColor = "ffff00";
+	}
+	else if(essence_type.equals("pois")) {
+		essence_pois_date = df.format(date);
+		essence_pois_casts = 0;
+		_essColor = "008000";
+	}
+	clientGUI.printText("general", "*** " + essence_type.toUpperCase() + " ESSENCE IMPROVED ***\n", _essColor);
+	essence_type = "";
+	essence_gained = false;
+	essence_save();
+}
+
+// Parse through skills list to get current essences percents
+void ess_parse_essences() {
+	String skill1 = vars.get(1).trim();
+//	int percent1 = Integer.parseInt(vars.get(3));
+	int percent1 = Integer.parseInt(vars.get(2));
+//	String skill2 = vars.get(4).trim();
+	String skill2 = vars.get(3).trim();
+//	int percent2 = Integer.parseInt(vars.get(6));
+	int percent2 = Integer.parseInt(vars.get(4));
+	String reg = "(Essence of arctic powers|Essence of asphyxiation|Essence of corrosion|Essence of electricity|Essence of magic lore|Essence of pyromania|Essence of toxicology)";
+	Pattern essPattern = Pattern.compile(reg, Pattern.DOTALL);
+	Matcher essMatcher1 = essPattern.matcher(skill1);
+	Matcher essMatcher2 = essPattern.matcher(skill2);
+	boolean matched1 = essMatcher1.matches();
+	boolean matched2 = essMatcher2.matches();
+	if(matched1) {
+		if(skill1.equals("Essence of corrosion")) {
+			essence_acid = percent1;
+		}
+		else if(skill1.equals("Essence of asphyxiation")) {
+			essence_aspx = percent1;
+		}
+		else if(skill1.equals("Essence of arctic powers")) {
+			essence_cold = percent1;
+		}
+		else if(skill1.equals("Essence of electricity")) {
+			essence_elec = percent1;
+		}
+		else if(skill1.equals("Essence of pyromania")) {
+			essence_fire = percent1;
+		}
+		else if(skill1.equals("Essence of magic lore")) {
+			essence_mana = percent1;
+		}
+		else if(skill1.equals("Essence of toxicology")) {
+			essence_pois = percent1;
+		}
+	}
+	if(matched2) {
+		if(skill2.equals("Essence of corrosion")) {
+			essence_acid = percent2;
+		}
+		else if(skill2.equals("Essence of asphyxiation")) {
+			essence_aspx = percent2;
+		}
+		else if(skill2.equals("Essence of arctic powers")) {
+			essence_cold = percent2;
+		}
+		else if(skill2.equals("Essence of electricity")) {
+			essence_elec = percent2;
+		}
+		else if(skill2.equals("Essence of pyromania")) {
+			essence_fire = percent2;
+		}
+		else if(skill2.equals("Essence of magic lore")) {
+			essence_mana = percent2;
+		}
+		else if(skill2.equals("Essence of toxicology")) {
+			essence_pois = percent2;
+		}
+	}
+}
+
+// When we see the total line remove the parsing triggers and display
+void ess_parse_essences_end() {
+	triggerManager.removeTrigger("ess_parse_essences");
+	triggerManager.removeTrigger("ess_parse_essences_end");
+	essence_display(_essCommand);
+}
+
+// Displays essence chart.  Colorized to local echo or redirected to channel
+void essence_display(_ess_Command) {
+	String _acid_per = essence_get_progress(essence_acid, essence_acid_casts);
+	String _aspx_per = essence_get_progress(essence_aspx, essence_aspx_casts);
+	String _cold_per = essence_get_progress(essence_cold, essence_cold_casts);
+	String _elec_per = essence_get_progress(essence_elec, essence_elec_casts);
+	String _fire_per = essence_get_progress(essence_fire, essence_fire_casts);
+	String _mana_per = essence_get_progress(essence_mana, essence_mana_casts);
+	String _pois_per = essence_get_progress(essence_pois, essence_pois_casts);
+	int _acid_total = essence_get_totals(essence_acid, essence_acid_casts);
+	int _aspx_total = essence_get_totals(essence_aspx, essence_aspx_casts);
+	int _cold_total = essence_get_totals(essence_cold, essence_cold_casts);
+	int _elec_total = essence_get_totals(essence_elec, essence_elec_casts);
+	int _fire_total = essence_get_totals(essence_fire, essence_fire_casts);
+	int _mana_total = essence_get_totals(essence_mana, essence_mana_casts);
+	int _pois_total = essence_get_totals(essence_pois, essence_pois_casts);
+	int _total_casts = _acid_total + _aspx_total + _cold_total + _elec_total + _fire_total + _mana_total + _pois_total;
+	if(_essCommand != null) {
+		clientGUI.doCommand("@@" + _ess_Command + " ,------------------------------------------------------------------------.");
+		clientGUI.doCommand("@@" + _ess_Command + " | Type         | Essence |   Blast Count   |  Last Increase   |   Total  |");
+		clientGUI.doCommand("@@" + _ess_Command + " |==============|=========|=================|==================|==========|");
+		clientGUI.doCommand("@@" + _ess_Command + " | Acid         | " + String.format("%5d", new Object[] { new Integer(essence_acid) }) + "   | " + String.format("%15s", new Object[] { new String(_acid_per) }) + " | " + essence_acid_date + " | " + String.format("%8d", new Object[] { new Integer(_acid_total) }) + " |");
+		clientGUI.doCommand("@@" + _ess_Command + " | Asphyxiation | " + String.format("%5d", new Object[] { new Integer(essence_aspx) }) + "   | " + String.format("%15s", new Object[] { new String(_aspx_per) }) + " | " + essence_aspx_date + " | " + String.format("%8d", new Object[] { new Integer(_aspx_total) }) + " |");
+		clientGUI.doCommand("@@" + _ess_Command + " | Cold         | " + String.format("%5d", new Object[] { new Integer(essence_cold) }) + "   | " + String.format("%15s", new Object[] { new String(_cold_per) }) + " | " + essence_cold_date + " | " + String.format("%8d", new Object[] { new Integer(_cold_total) }) + " |");
+		clientGUI.doCommand("@@" + _ess_Command + " | Electricity  | " + String.format("%5d", new Object[] { new Integer(essence_elec) }) + "   | " + String.format("%15s", new Object[] { new String(_elec_per) }) + " | " + essence_elec_date + " | " + String.format("%8d", new Object[] { new Integer(_elec_total) }) + " |");
+		clientGUI.doCommand("@@" + _ess_Command + " | Fire         | " + String.format("%5d", new Object[] { new Integer(essence_fire) }) + "   | " + String.format("%15s", new Object[] { new String(_fire_per) }) + " | " + essence_fire_date + " | " + String.format("%8d", new Object[] { new Integer(_fire_total) }) + " |");
+		clientGUI.doCommand("@@" + _ess_Command + " | Mana         | " + String.format("%5d", new Object[] { new Integer(essence_mana) }) + "   | " + String.format("%15s", new Object[] { new String(_mana_per) }) + " | " + essence_mana_date + " | " + String.format("%8d", new Object[] { new Integer(_mana_total) }) + " |");
+		clientGUI.doCommand("@@" + _ess_Command + " | Poison       | " + String.format("%5d", new Object[] { new Integer(essence_pois) }) + "   | " + String.format("%15s", new Object[] { new String(_pois_per) }) + " | " + essence_pois_date + " | " + String.format("%8d", new Object[] { new Integer(_pois_total) }) + " |");
+		clientGUI.doCommand("@@" + _ess_Command + " `------------------------------------------------------------------------'");
+		clientGUI.doCommand("@@" + _ess_Command + "                                                               | " + String.format("%8d", new Object[] { new Integer(_total_casts) }) + " |");
+		clientGUI.doCommand("@@" + _ess_Command + "                                                               `----------'");
+	}
+	else {
+		clientGUI.printText("general", ",------------------------------------------------------------------------.\n", "ffffff");
+		clientGUI.printText("general", "| Type         | Essence |   Blast Count   |  Last Increase   |   Total  |\n", "ffffff");
+		clientGUI.printText("general", "|==============|=========|=================|==================|==========|\n", "ffffff");
+		clientGUI.printText("general", "| ", "ffffff");
+		clientGUI.printText("general", "Acid         ", "00ff00");
+		clientGUI.printText("general", "| ", "ffffff");
+		clientGUI.printText("general", String.format("%5d", new Object[] { new Integer(essence_acid) }), "00ff00");
+		clientGUI.printText("general", "   | ", "ffffff");
+		clientGUI.printText("general", String.format("%15s", new Object[] { new String(_acid_per) }), "00ff00");
+		clientGUI.printText("general", " | ", "ffffff");
+		clientGUI.printText("general", essence_acid_date, "00ff00");
+		clientGUI.printText("general", " | ", "ffffff");
+		clientGUI.printText("general", String.format("%8d", new Object[] { new Integer(_acid_total) }), "00ff00");
+		clientGUI.printText("general", " |\n", "ffffff");
+		clientGUI.printText("general", "| ", "ffffff");
+		clientGUI.printText("general", "Asphyxiation ", "ff00ff");
+		clientGUI.printText("general", "| ", "ffffff");
+		clientGUI.printText("general", String.format("%5d", new Object[] { new Integer(essence_aspx) }), "ff00ff");
+		clientGUI.printText("general", "   | ", "ffffff");
+		clientGUI.printText("general", String.format("%15s", new Object[] { new String(_aspx_per) }), "ff00ff");
+		clientGUI.printText("general", " | ", "ffffff");
+		clientGUI.printText("general", essence_aspx_date, "ff00ff");
+		clientGUI.printText("general", " | ", "ffffff");
+		clientGUI.printText("general", String.format("%8d", new Object[] { new Integer(_aspx_total) }), "ff00ff");
+		clientGUI.printText("general", " |\n", "ffffff");
+		clientGUI.printText("general", "| ", "ffffff");
+		clientGUI.printText("general", "Cold         ", "0000ff");
+		clientGUI.printText("general", "| ", "ffffff");
+		clientGUI.printText("general", String.format("%5d", new Object[] { new Integer(essence_cold) }), "0000ff");
+		clientGUI.printText("general", "   | ", "ffffff");
+		clientGUI.printText("general", String.format("%15s", new Object[] { new String(_cold_per) }), "0000ff");
+		clientGUI.printText("general", " | ", "ffffff");
+		clientGUI.printText("general", essence_cold_date, "0000ff");
+		clientGUI.printText("general", " | ", "ffffff");
+		clientGUI.printText("general", String.format("%8d", new Object[] { new Integer(_cold_total) }), "0000ff");
+		clientGUI.printText("general", " |\n", "ffffff");
+		clientGUI.printText("general", "| ", "ffffff");
+		clientGUI.printText("general", "Electricity  ", "00ffff");
+		clientGUI.printText("general", "| ", "ffffff");
+		clientGUI.printText("general", String.format("%5d", new Object[] { new Integer(essence_elec) }), "00ffff");
+		clientGUI.printText("general", "   | ", "ffffff");
+		clientGUI.printText("general", String.format("%15s", new Object[] { new String(_elec_per) }), "00ffff");
+		clientGUI.printText("general", " | ", "ffffff");
+		clientGUI.printText("general", essence_elec_date, "00ffff");
+		clientGUI.printText("general", " | ", "ffffff");
+		clientGUI.printText("general", String.format("%8d", new Object[] { new Integer(_elec_total) }), "00ffff");
+		clientGUI.printText("general", " |\n", "ffffff");
+		clientGUI.printText("general", "| ", "ffffff");
+		clientGUI.printText("general", "Fire         ", "ff0000");
+		clientGUI.printText("general", "| ", "ffffff");
+		clientGUI.printText("general", String.format("%5d", new Object[] { new Integer(essence_fire) }), "ff0000");
+		clientGUI.printText("general", "   | ", "ffffff");
+		clientGUI.printText("general", String.format("%15s", new Object[] { new String(_fire_per) }), "ff0000");
+		clientGUI.printText("general", " | ", "ffffff");
+		clientGUI.printText("general", essence_fire_date, "ff0000");
+		clientGUI.printText("general", " | ", "ffffff");
+		clientGUI.printText("general", String.format("%8d", new Object[] { new Integer(_fire_total) }), "ff0000");
+		clientGUI.printText("general", " |\n", "ffffff");
+		clientGUI.printText("general", "| ", "ffffff");
+		clientGUI.printText("general", "Mana         ", "ffff00");
+		clientGUI.printText("general", "| ", "ffffff");
+		clientGUI.printText("general", String.format("%5d", new Object[] { new Integer(essence_mana) }), "ffff00");
+		clientGUI.printText("general", "   | ", "ffffff");
+		clientGUI.printText("general", String.format("%15s", new Object[] { new String(_mana_per) }), "ffff00");
+		clientGUI.printText("general", " | ", "ffffff");
+		clientGUI.printText("general", essence_mana_date, "ffff00");
+		clientGUI.printText("general", " | ", "ffffff");
+		clientGUI.printText("general", String.format("%8d", new Object[] { new Integer(_mana_total) }), "ffff00");
+		clientGUI.printText("general", " |\n", "ffffff");
+		clientGUI.printText("general", "| ", "ffffff");
+		clientGUI.printText("general", "Poison       ", "008000");
+		clientGUI.printText("general", "| ", "ffffff");
+		clientGUI.printText("general", String.format("%5d", new Object[] { new Integer(essence_pois) }), "008000");
+		clientGUI.printText("general", "   | ", "ffffff");
+		clientGUI.printText("general", String.format("%15s", new Object[] { new String(_pois_per) }), "008000");
+		clientGUI.printText("general", " | ", "ffffff");
+		clientGUI.printText("general", essence_pois_date, "008000");
+		clientGUI.printText("general", " | ", "ffffff");
+		clientGUI.printText("general", String.format("%8d", new Object[] { new Integer(_pois_total) }), "008000");
+		clientGUI.printText("general", " |\n", "ffffff");
+		clientGUI.printText("general", "`------------------------------------------------------------------------'\n", "ffffff");
+		clientGUI.printText("general", "                                                              | " + String.format("%8d", new Object[] { new Integer(_total_casts) }) + " |\n", "ffffff");
+		clientGUI.printText("general", "                                                              `----------'\n", "ffffff");
+	}
+	essence_save();
+}
+
+// Calculates percentage of next essence gain
+String essence_get_progress(essence, casts) {
+	String _percent;
+	float _essence = essence * 1.0;
+	float _casts = casts * 1.0;
+	DecimalFormat df = new DecimalFormat("###.##");
+	if(essence >= 90) {
+		_percent = df.format((_casts / 12000.0) * 100.0);
+	}
+	else if(essence < 90 && essence >= 80) {
+		_percent = df.format((_casts / 10500.0) * 100.0);
+	}
+	else if(essence < 80 && essence >= 70) {
+		_percent = df.format((_casts / 9000.0) * 100.0);
+	}
+	else if(essence < 70 && essence >= 60) {
+		_percent = df.format((_casts / 7500.0) * 100.0);
+	}
+	else if(essence < 60 && essence >= 50) {
+		_percent = df.format((_casts / 6000.0) * 100.0);
+	}
+	else if(essence < 50 && essence >= 40) {
+		_percent = df.format((_casts / 4500.0) * 100.0);
+	}
+	else if(essence < 40 && essence >= 30) {
+		_percent = df.format((_casts / 3000.0) * 100.0);
+	}
+	else if(essence < 30 && essence >= 20) {
+		_percent = df.format((_casts / 1500.0) * 100.0);
+	}
+	else if(essence < 20 && essence >= 10) {
+		_percent = df.format((_casts / 350.0) * 100.0);
+	}
+	else if(essence < 10) {
+		_percent = df.format((_casts / 50.0) * 100.0);
+	}
+	String ess_percent = String.format ("%6s", new Object[] { new String(_percent) });
+	String ess_return = String.valueOf(casts) + " (" + ess_percent + "%)";
+	return ess_return;
+}
+
+// Calculates total blasts
+int essence_get_totals(essence, casts) {
+	int ess_remain;
+	int ess_return;
+	if(essence >= 90) {
+		ess_remain = essence - 90;
+		ess_return = (ess_remain * 12000) + 424000 + casts;
+	}
+	else if(essence < 90 && essence >= 80) {
+		ess_remain = essence - 80;
+		ess_return = (ess_remain * 10500) + 319000 + casts;
+	}
+	else if(essence < 80 && essence >= 70) {
+		ess_remain = essence - 70;
+		ess_return = (ess_remain * 9000) + 229000 + casts;
+	}
+	else if(essence < 70 && essence >= 60) {
+		ess_remain = essence - 60;
+		ess_return = (ess_remain * 7500) + 154000 + casts;
+	}
+	else if(essence < 60 && essence >= 50) {
+		ess_remain = essence - 50;
+		ess_return = (ess_remain * 6000) + 94000 + casts;
+	}
+	else if(essence < 50 && essence >= 40) {
+		ess_remain = essence - 40;
+		ess_return = (ess_remain * 4500) + 49000 + casts;
+	}
+	else if(essence < 40 && essence >= 30) {
+		ess_remain = essence - 30;
+		ess_return = (ess_remain * 3000) + 19000 + casts;
+	}
+	else if(essence < 30 && essence >= 20) {
+		ess_remain = essence - 20;
+		ess_return = (ess_remain * 1500) + 4000 + casts;
+	}
+	else if(essence < 20 && essence >= 10) {
+		ess_remain = essence - 10;
+		ess_return = (ess_remain * 350) + 500 + casts;
+	}
+	else if(essence < 10) {
+		ess_return = (essence * 50) + casts;
+	}
+	return ess_return;
+}
+
+void essence_start() {
+	triggerManager.newTrigger("ess_parse_essences",
+// Changed for Nov 25, 2021 tune to the way skills/spells are shown
+//	"\\| ([A-z ]*)\\|([ ]*)([0-9]*) \\| ([A-z ]*)\\|([ ]*)([0-9]*) \\|",
+	"\\| ([A-z ]*)([0-9]*) \\| ([A-z ]*)([0-9]*) \\|",
+	"$essence.ess_parse_essences",true,false,false,null,Font.PLAIN);
+	triggerManager.newTrigger("ess_parse_essences_end",
+	"\\| Total: ([0-9 ]*)\\|",
+	"$essence.ess_parse_essences_end",true,false,false,null,Font.PLAIN);
+	clientGUI.doCommand("@grep 'Essence of arctic powers|Essence of asphyxiation|Essence of corrosion|Essence of electricity|Essence of magic lore|Essence of pyromania|Essence of toxicology|Total:' show skills");
+}
+
+// Check if save file exists and load variables from file if it does
+void essence_load() {
+	String _eLine;
+	_eFile = new File(_Path);
+	if(!_eFile.exists()) {
+		clientGUI.printText("general", "Mage essence save file not found. Initializing variables to 0\n", "ffff00");
+	}
+	else {
+		f = new FileReader(_Path);
+		b = new BufferedReader(f);
+		_eLine = b.readLine();
+		while(_eLine != null) {
+			String reg = "([a-z]*)#([0-9]*)#([0-9]*)#(.*)";
+			Pattern essPattern = Pattern.compile(reg, Pattern.DOTALL);
+			Matcher essMatcher = essPattern.matcher(_eLine);
+			boolean matched = essMatcher.matches();
+			if(matched) {
+				if(essMatcher.group(1).equals("acid")) {
+					essence_acid = Integer.parseInt(essMatcher.group(2));
+					essence_acid_casts = Integer.parseInt(essMatcher.group(3));
+					essence_acid_date = essMatcher.group(4);
+				}
+				else if(essMatcher.group(1).equals("aspx")) {
+					essence_aspx = Integer.parseInt(essMatcher.group(2));
+					essence_aspx_casts = Integer.parseInt(essMatcher.group(3));
+					essence_aspx_date = essMatcher.group(4);
+				}
+				else if(essMatcher.group(1).equals("cold")) {
+					essence_cold = Integer.parseInt(essMatcher.group(2));
+					essence_cold_casts = Integer.parseInt(essMatcher.group(3));
+					essence_cold_date = essMatcher.group(4);
+				}
+				else if(essMatcher.group(1).equals("elec")) {
+					essence_elec = Integer.parseInt(essMatcher.group(2));
+					essence_elec_casts = Integer.parseInt(essMatcher.group(3));
+					essence_elec_date = essMatcher.group(4);
+				}
+				else if(essMatcher.group(1).equals("fire")) {
+					essence_fire = Integer.parseInt(essMatcher.group(2));
+					essence_fire_casts = Integer.parseInt(essMatcher.group(3));
+					essence_fire_date = essMatcher.group(4);
+				}
+				else if(essMatcher.group(1).equals("mana")) {
+					essence_mana = Integer.parseInt(essMatcher.group(2));
+					essence_mana_casts = Integer.parseInt(essMatcher.group(3));
+					essence_mana_date = essMatcher.group(4);
+				}
+				else if(essMatcher.group(1).equals("pois")) {
+					essence_pois = Integer.parseInt(essMatcher.group(2));
+					essence_pois_casts = Integer.parseInt(essMatcher.group(3));
+					essence_pois_date = essMatcher.group(4);
+				}
+			}
+			_eLine = b.readLine();
+		}
+		f.close();
+		b.close();
+	}
+}
+
+// Write data to save file
+void essence_save() {
+	f = new FileOutputStream(_Path, false);
+	p = new PrintStream(f);
+	p.println("acid#" + essence_acid + "#" + essence_acid_casts + "#" + essence_acid_date);
+	p.println("aspx#" + essence_aspx + "#" + essence_aspx_casts + "#" + essence_aspx_date);
+	p.println("cold#" + essence_cold + "#" + essence_cold_casts + "#" + essence_cold_date);
+	p.println("elec#" + essence_elec + "#" + essence_elec_casts + "#" + essence_elec_date);
+	p.println("fire#" + essence_fire + "#" + essence_fire_casts + "#" + essence_fire_date);
+	p.println("mana#" + essence_mana + "#" + essence_mana_casts + "#" + essence_mana_date);
+	p.println("pois#" + essence_pois + "#" + essence_pois_casts + "#" + essence_pois_date);
+	p.close();
+	f.close();
+}
+
+void help() {
+	clientGUI.printText("general", "Usage: ", "ffff00");
+	clientGUI.printText("general", "$essence\n", "ffffff");
+	clientGUI.printText("general", "       $essence <command>\n", "ffffff");
+	clientGUI.printText("general", "Both of these commands will display a chart of mage essence. The second\n", "ffff00");
+	clientGUI.printText("general", "form will prepend ", "ffff00");
+	clientGUI.printText("general", "@@<command> ", "ffffff");
+	clientGUI.printText("general", "to the chart so you may show the output on some\n", "ffff00");
+	clientGUI.printText("general", "channel (emote/say/tell/channel) rather than just echoing to the local screen.\n", "ffff00");
+}
+
+void run() {
+	_essCommand = argument;
+	essence_start();
+}
+

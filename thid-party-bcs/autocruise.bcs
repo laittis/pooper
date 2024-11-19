@@ -1,0 +1,391 @@
+/*
+ * autocruise.bcs
+ *
+ * Hair@BatMUD
+ *
+ * This script cruises you to a specified coordinate on the same continent. It doesn't use any fancy pathfinding or
+ * terrain avoidance, simply cruises in a series of straight lines to your destination. You will be informed if your
+ * ship cannot continue its journey so this is really only useful for Class 5 or 6 ships, or Class 4 ships that have
+ * had alot of effort in upgrading their lift magi.
+ *
+ */
+/* Updated 22 July, 2023
+ * Added error checking for sending sail/cruise commands in the middle of an autocruise
+ * Added error checking for sending 'sail stop' in the middle of an autocruise
+ * Fixed issue where if you typed 'whereami' in the middle of an autocruise unexpected things would happen
+ * Added 'autocruise stop' to abort current autocruise
+ */
+
+SCRIPT_NAME = "autocruise";
+SCRIPT_DESC = "Uses simple math to cruise to coordinates on same continent";
+SCRIPT_OFF = false;
+
+String PATH;
+
+import java.lang.Math;
+import java.util.regex.*;
+import java.util.HashMap;
+import com.mythicscape.batclient.interfaces.Trigger;
+import com.mythicscape.batclient.interfaces.TriggerManager;
+
+// ANSI color codes
+// These are here to be able to do inline color changes without having to do stupid batclient
+// syntax with no support for background colors!
+// If you use this be sure to have RESET at the end, otherwise you'll suffer color bleed
+String RESET 		= "\u001b[0m";
+String BOLD 		= "\u001b[1m";
+String BLACK 		= "\u001b[30m";
+String RED 		= "\u001b[31m";
+String GREEN 		= "\u001b[32m";
+String YELLOW 		= "\u001b[33m";
+String BLUE 		= "\u001b[34m";
+String MAGENTA 		= "\u001b[35m";
+String CYAN 		= "\u001b[36m";
+String WHITE 		= "\u001b[37m";
+String BGBLACK 		= "\u001b[40m";
+String BGRED 		= "\u001b[41m";
+String BGGREEN 		= "\u001b[42m";
+String BGYELLOW 	= "\u001b[43m";
+String BGBLUE 		= "\u001b[44m";
+String BGMAGENTA	= "\u001b[45m";
+String BGCYAN 		= "\u001b[46m";
+String BGWHITE 		= "\u001b[47m";
+
+String HEADER = BOLD + YELLOW + "[" + RESET + YELLOW + "Autocruise" + BOLD + YELLOW + "]: " + RESET;
+boolean acFlag = false;
+boolean acSecured = false;
+boolean acInit = false;
+int endX, endY, acWaypoint;
+Map wayPoints = new HashMap();
+Trigger acCoord;
+Trigger acCont;
+Trigger acAnchor;
+Trigger acBlock;
+Trigger acBlock2;
+Trigger acDetour;
+Trigger acStopped;
+
+void bootup() {
+	PATH = clientGUI.getBaseDirectory() + "/scripts/";
+	PATH = PATH.replace("\\","/");
+	acCoord = triggerManager.newTrigger("acGetXyCoord",
+		"^You are in (.*) on the continent of ([A-Za-z]*). \\(Coordinates\\: ([0-9]*)x, ([0-9]*)y\\; Global\\: ([0-9]*)x, ([0-9]*)y\\)$",
+		"$"+SCRIPT_NAME+".acGetXyCoord",true,false,false,null, Font.PLAIN);
+	acCont = triggerManager.newTrigger("acContinue",
+		"(.*) tells you \\'We\\'ve gon\\' as far towards ([a-z]*) as ask\\'d, (.*).\\'$",
+		"$"+SCRIPT_NAME+".acContinue",false,false,false,null, Font.PLAIN);
+	acAnchor = triggerManager.newTrigger("acAnchored",
+		"^(.*) whispers to you \\'I din\\'nae think we\\'ll get verra far wit\\' tha anchor down.\\'$",
+		"$"+SCRIPT_NAME+".acAnchored",false,false,false,null, Font.PLAIN);
+	acLanded = triggerManager.newTrigger("acLanded",
+		"^(.*) informs you \\'We\\'ve got ta lift off first, (.*)\\'$",
+		"$"+SCRIPT_NAME+".acAnchored",false,false,false,null, Font.PLAIN);
+	acBlock = triggerManager.newTrigger("acBlocked",
+		"^(.*) tells you \\'We\\'ve can\\'nae go ena more towards (.*).\\'$",
+		"$"+SCRIPT_NAME+".acBlocked",false,false,false,null, Font.PLAIN);
+	acBlock2 = triggerManager.newTrigger("acBlocked2",
+		"^(.*) tells you \\'We can\\'nae progress towards (.*) ena\\'more.\\'$",
+		"$"+SCRIPT_NAME+".acBlocked",false,false,false,null, Font.PLAIN);
+	acDetour = triggerManager.newTrigger("acDetour",
+		"^(.*) tells you 'Aye, (.*). Set'n sail.'",
+		"$"+SCRIPT_NAME+".acDetour",false,false,false,null, Font.PLAIN);
+	acStopped = triggerManager.newTrigger("acStopped",
+		"^(.*) tells you 'Comin' to a stop, (.*).'",
+		"$"+SCRIPT_NAME+".acStopped",false,false,false,null, Font.PLAIN);
+	// You can change or remove this /alias if you wish. This lets you just use "autocruise 123x456y" rather than "$autocruise 123x456y"
+	clientGUI.doCommand("/alias autocruise=$autocruise");
+	// Just an informative echo
+	clientGUI.printText("general", HEADER + BOLD + WHITE + "Autocruise loaded. " + RESET + BOLD + CYAN + "autocruise help" + RESET + "\n", false);
+	disable();
+	loadWaypoints();
+}
+
+
+void acGetXyCoord() {
+	int startX, startY;
+	if (acFlag) {
+		startX = Integer.parseInt(vars.get(3));
+		startY = Integer.parseInt(vars.get(4));
+		if (!acSecured) {
+			clientGUI.printText("general", HEADER + BOLD + WHITE + "Preparing to sail to " + RESET + BOLD + CYAN + endX + "x" + endY + "y" + RESET + BOLD + WHITE + " on the continent of " + RESET + BOLD + CYAN + vars.get(2) + RESET + "\n", false);
+		} else {
+			acSecured = false;
+		}
+		acDoAutoCruise(startX, startY);
+	} else {
+		clientGUI.printText("general", vars.get(0)+"\n", false);
+	}
+}
+
+void acContinue() {
+	if (acFlag) {
+		acWaypoint--;
+		if (acWaypoint == 0) {
+			clientGUI.printText("general", HEADER+BOLD+GREEN+"Autocruise Complete!"+RESET+"\n", false);
+			acFlag = false;
+			disable();
+		}
+	}
+}
+
+void acAnchored() {
+	acSecured = true;
+	clientGUI.doCommand("ship launch");
+	clientGUI.doCommand("whereami");
+}
+
+void acBlocked() {
+	clientGUI.printText("general", HEADER + BOLD + MAGENTA + "Getting blocked by terrain. Check console height and ship condition." + RESET + "\n", false);
+	acFlag = false;
+	disable();
+}
+
+void acDoAutoCruise(int startX, int startY) {
+	int acXdiff, acXdiff2, acYdiff, acYdiff2;
+	String acXdir, acYdir, acCruiseDir;
+	acXdiff = endX - startX;
+	acYdiff = endY - startY;
+	if (acXdiff < 0) {
+		acXdir = "west";
+	} else if (acXdiff > 0) {
+		acXdir = "east";
+	}
+	if (acYdiff < 0) {
+		acYdir = "north";
+	} else if (acYdiff > 0) {
+		acYdir = "south";
+	}
+	acXdiff = Math.abs(acXdiff);
+	acYdiff = Math.abs(acYdiff);
+	if (acXdiff == 0) {
+		if (acYdiff == 0) {
+			disable();
+			clientGUI.printText("general", HEADER + " Nowhere to go!\n", false);
+		} else {
+			disable();
+			acFlag = false;
+			acCruiseDir = "cruise " + String.valueOf(acYdiff) + " " + acYdir;
+			acWaypoint = 1;
+		}
+	} else if (acYdiff == 0) {
+		if (acXdiff == 0) {
+			disable();
+			clientGUI.printText("general", HEADER + " Nowhere to go!\n", false);
+		} else {
+			disable();
+			acFlag = false;
+			acCruiseDir = "cruise " + String.valueOf(acXdiff) + " " + acXdir;
+			acWaypoint = 1;
+		}
+	} else if (acXdiff > acYdiff) {
+		acCruiseDir = "cruise " + acYdiff + " " + acYdir + acXdir;
+		acXdiff2 = acXdiff - acYdiff;
+		acCruiseDir = acCruiseDir + "," + String.valueOf(acXdiff2) + " " + acXdir;
+		acWaypoint = 2;
+	} else if (acYdiff > acXdiff) {
+		acCruiseDir = "cruise " + acXdiff + " " + acYdir + acXdir;
+		acYdiff2 = acYdiff - acXdiff;
+		acCruiseDir = acCruiseDir + "," + String.valueOf(acYdiff2) + " " + acYdir;
+		acWaypoint = 2;
+	} else if (acYdiff == acXdiff) {
+		acCruiseDir = "cruise " + acYdiff + " " + acYdir + acXdir;
+		acWaypoint = 1;
+	}
+	clientGUI.doCommand(acCruiseDir);
+	acCoord.setActive(false);
+}
+
+void acDetour() {
+	if (acInit) {
+		acInit = false;
+	} else {
+		disable();
+		clientGUI.printText("general", HEADER + BOLD + RED + "Aborting Autocruise. " + RESET + BOLD + WHITE + "sail/cruise command detected." + RESET + "\n", false);
+	}
+}
+
+void acStopped() {
+	disable();
+	clientGUI.printText("general", HEADER + BOLD + RED + "Aborting Autocruise. " + RESET + BOLD + MAGENTA + "sail stop" + RESET + BOLD + WHITE + " command detected." + RESET + "\n", false);
+}
+		
+void stopAutocruise() {
+	disable();
+	clientGUI.doCommand("sail stop");
+	clientGUI.printText("general", HEADER + BOLD + RED + "Autocruise aborted. Stopping ship." + RESET + "\n", false);
+}
+
+void enable() {
+	acCoord.setActive(true);
+	acCont.setActive(true);
+	acAnchor.setActive(true);
+	acBlock.setActive(true);
+	acBlock2.setActive(true);
+	acDetour.setActive(true);
+	acStopped.setActive(true);
+}
+
+void disable() {
+	acCoord.setActive(false);
+	acCont.setActive(false);
+	acAnchor.setActive(false);
+	acBlock.setActive(false);
+	acBlock2.setActive(false);
+	acDetour.setActive(false);
+	acStopped.setActive(false);
+	acFlag = false;
+	acInit = false;
+}
+
+void printWaypoints() {
+	ArrayList _wpList = new ArrayList();
+	clientGUI.printText("general", HEADER + BOLD + GREEN + "Stored Waypoints" + RESET + "\n", false);
+	for (String _name: wayPoints.keySet()) {
+		String _key = _name;
+		String _value = wayPoints.get(_name);
+		_wpList.add(_name);
+	}
+	Collections.sort(_wpList);
+	while (!_wpList.isEmpty()) {
+		clientGUI.printText("general", HEADER + BOLD + CYAN + _wpList.get(0) + " " + wayPoints.get(_wpList.get(0)) + RESET + "\n", false);
+		_wpList.remove(0);
+	}
+}
+
+void addWaypoints(String arg) {
+	boolean _wpExists = false;
+	String _wpName, _wpCoord;
+	String _reg = "(.*) ([0-9]*)x([0-9]*)y";
+	Pattern wpPattern = Pattern.compile(_reg, Pattern.DOTALL);
+	Matcher wpMatcher = wpPattern.matcher(arg);
+	if (wpMatcher.matches()) {
+		_wpName = wpMatcher.group(1);
+		_wpCoord = wpMatcher.group(2) + "x" + wpMatcher.group(3) + "y";
+	} else {
+		clientGUI.printText("general", HEADER + BOLD + YELLOW + "Incorrect format. autocruise add name 123x456y" + RESET + "\n", false);
+		return;
+	}
+	for (String _name: wayPoints.keySet()) {
+		String _key = _name;
+		String _value = wayPoints.get(_name);
+		if (_name.equals(_wpName)) {
+			_wpExists = true;
+		}
+	}
+	if (_wpExists) {
+		clientGUI.printText("general", HEADER + BOLD + RED + "Waypoint name " + RESET + BOLD + CYAN + _wpName + RESET + BOLD + RED + " already exists." + RESET + "\n", false);
+	} else {
+		wayPoints.put(_wpName, _wpCoord);
+		writeWaypoints();
+		clientGUI.printText("general", HEADER + BOLD + MAGENTA + "Waypoint " + RESET + BOLD + CYAN + _wpName + " (" + _wpCoord + ")" + RESET + BOLD + MAGENTA + " added." + RESET + "\n", false);
+	}
+}
+
+void deleteWaypoints(String arg) {
+	boolean _wpExists = false;
+	for (String _name: wayPoints.keySet()) {
+		String _key = _name;
+		String _value = wayPoints.get(_name);
+		if (_name.equals(arg)) {
+			_wpExists = true;
+		}
+	}
+	if (_wpExists) {
+		wayPoints.remove(arg);
+		clientGUI.printText("general", HEADER + BOLD + MAGENTA + "Waypoint " + RESET + BOLD + CYAN + arg + RESET + BOLD + MAGENTA + " has been deleted!" + RESET + "\n", false);
+		writeWaypoints();
+	} else {
+		clientGUI.printText("general", HEADER + BOLD + RED + "Waypoint name " + RESET + BOLD + CYAN + arg + RESET + BOLD + RED + " does not exist." + RESET + "\n", false);
+	}
+}
+
+void writeWaypoints() {
+	f = new FileOutputStream(PATH+"autocruise.dat", false);
+	p = new PrintStream(f);
+	for (String _name: wayPoints.keySet()) {
+		String _key = _name;
+		String _value = wayPoints.get(_name);
+		p.println(_name + " " + _value);
+	}
+}
+
+void loadWaypoints() {
+	String _line;
+	_file = new File(PATH + "autocruise.dat");
+	if (!_file.exists()) {
+		clientGUI.printText("general", HEADER + BOLD + YELLOW + "Waypoint data not found. Saved waypoints are empty." + RESET + "\n", false);
+	} else {
+		f = new FileReader(PATH + "autocruise.dat");
+		b = new BufferedReader(f);
+		_line = b.readLine();
+		while (_line != null) {
+			String _reg = "(.*) ([0-9.]*)x([0-9]*)y";
+			Pattern wpPattern = Pattern.compile(_reg, Pattern.DOTALL);
+			Matcher wpMatcher = wpPattern.matcher(_line);
+			if (wpMatcher.matches()) {
+				wayPoints.put(wpMatcher.group(1), wpMatcher.group(2) + "x" + wpMatcher.group(3) + "y");
+			}
+			_line = b.readLine();
+		}
+		f.close();
+		b.close();
+	}
+}
+
+void run() {
+	if (argument == null) {
+		clientGUI.printText("general", HEADER + BOLD + WHITE + "Usage: " + RESET + BOLD + CYAN + "autocruise 123x456y " + RESET + "\n", false);
+		clientGUI.printText("general", HEADER + BOLD + MAGENTA + "autocruise help" + RESET + BOLD + WHITE + " for advanced options." + RESET + "\n", false);
+	} else if (argument.equals("help")) {
+		help();
+	} else if (argument.equals("list")) {
+		printWaypoints();
+	} else if (argument.equals("stop")) {
+		stopAutocruise();
+	} else if (argument.startsWith("add ")) {
+		Pattern wpPattern = Pattern.compile("(add) (.*)", Pattern.DOTALL);
+		Matcher wpMatcher = wpPattern.matcher(argument);
+		if(wpMatcher.matches()) {
+			addWaypoints(wpMatcher.group(2));
+		}
+	} else if (argument.startsWith("delete ")) {
+		Pattern wpPattern = Pattern.compile("(delete) (.*)", Pattern.DOTALL);
+		Matcher wpMatcher = wpPattern.matcher(argument);
+		if(wpMatcher.matches()) {
+			deleteWaypoints(wpMatcher.group(2));
+		}
+	} else {
+		String _destination;
+		if (wayPoints.containsKey(argument)) {
+			_destination = wayPoints.get(argument);
+		} else {
+			_destination = argument;
+		}
+		Pattern acPattern = Pattern.compile("([0-9]*)x([0-9-]*)y", Pattern.DOTALL);
+		Matcher acMatcher = acPattern.matcher(_destination);
+		if (acMatcher.matches()) {
+			endX = Integer.parseInt(acMatcher.group(1));
+			endY = Integer.parseInt(acMatcher.group(2));
+			enable();
+			acFlag = true;
+			acInit = true;
+			acWaypoint = 0;
+			clientGUI.doCommand("whereami");
+		} else {
+			clientGUI.printText("general", HEADER + BOLD + WHITE + "Usage: " + RESET + BOLD + CYAN + "autocruise 123x456y " + RESET +BOLD + MAGENTA + "autocruise help" + RESET + BOLD + WHITE + " for advanced options." + RESET + "\n", false);
+		}
+	}
+}
+
+void help() {
+	clientGUI.printText("general", HEADER + BOLD + WHITE + "Basic Usage:" + RESET + "\n", false);
+	clientGUI.printText("general", HEADER + BOLD + CYAN + "autocruise 123x456y " + RESET + BOLD + WHITE + "                This will cruise you to 123x456y coordinate on your current continent." + RESET + "\n", false);
+	clientGUI.printText("general", HEADER + BOLD + YELLOW + "Advanced Usage:" + RESET + "\n", false);
+	clientGUI.printText("general", HEADER + BOLD + CYAN + "autocruise " + RESET + BOLD + MAGENTA + "<name>                   " + RESET + BOLD + WHITE + "This will cruise to the named waypoint from your stored list" + RESET + "\n", false);
+	clientGUI.printText("general", HEADER + BOLD + CYAN + "autocruise list                     " + RESET + BOLD + WHITE + "This will list any stored waypoints." + RESET + "\n", false);
+	clientGUI.printText("general", HEADER + BOLD + CYAN + "autocruise add " + RESET + BOLD + MAGENTA + "<name> " + RESET + BOLD + GREEN + "<coordinates> " + RESET + BOLD + WHITE + "This will add a waypoint to your stored list" + RESET + "\n", false);
+	clientGUI.printText("general", HEADER + BOLD + CYAN + "autocruise delete " + RESET + BOLD + MAGENTA + "<name>            " + RESET + BOLD + WHITE + "This will delete a waypoint from your stored list" + RESET + "\n", false);
+	clientGUI.printText("general", HEADER + BOLD + CYAN + "autocruise stop " + RESET + BOLD + WHITE + "                    Stop the ship and abort current autocruise action." + RESET + "\n", false);
+	clientGUI.printText("general", HEADER + BOLD + GREEN + "autocruise help " + RESET + BOLD + WHITE + "                    This help screen." + RESET + "\n", false);
+}
+

@@ -1,0 +1,100 @@
+SCRIPT_NAME = "stunreporter";
+SCRIPT_DESC = "Reports stuns if seen in scan info";
+SCRIPT_OFF = false;
+
+import java.util.HashMap;
+
+// ANSI color codes
+// These are here to be able to do inline color changes without having to do stupid batclient
+// syntax with no support for background colors!
+// If you use this be sure to have RESET at the end, otherwise you'll suffer color bleed
+String RESET 		= "\u001b[0m";
+String BOLD 		= "\u001b[1m";
+String BLACK 		= "\u001b[30m";
+String RED 		= "\u001b[31m";
+String GREEN 		= "\u001b[32m";
+String YELLOW 		= "\u001b[33m";
+String BLUE 		= "\u001b[34m";
+String MAGENTA 		= "\u001b[35m";
+String CYAN 		= "\u001b[36m";
+String WHITE 		= "\u001b[37m";
+String BGBLACK 		= "\u001b[40m";
+String BGRED 		= "\u001b[41m";
+String BGGREEN 		= "\u001b[42m";
+String BGYELLOW 	= "\u001b[43m";
+String BGBLUE 		= "\u001b[44m";
+String BGMAGENTA	= "\u001b[45m";
+String BGCYAN 		= "\u001b[46m";
+String BGWHITE 		= "\u001b[47m";
+
+// Flag to mark if a new round has happened
+boolean NEWROUND = true;
+
+Map stunNames = new HashMap();
+
+String HEADER = BOLD+YELLOW+"["+RESET+YELLOW+"StunReporter"+BOLD+YELLOW+"]: "+RESET;
+
+
+void bootup() {
+	triggerManager.newTrigger("stunCapture",
+		"^([A-z0-9'`,. -]*) is(.*)\\(([0-9]*)%\\)( and (.*))?\\.$",
+		"$"+SCRIPT_NAME+".stunCapture",false,false,false,null, Font.PLAIN);
+	triggerManager.newTrigger("stunDead",
+		"^([A-z0-9'`,. -]*) is DEAD, R.I.P.$",
+		"$"+SCRIPT_NAME+".stunDead",false,false,false,null, Font.PLAIN);
+	triggerManager.newTrigger("stunRoundMarker",
+		"\\*\\*\\*\\*\\*\\*\\*\\*\\*\\*\\*\\*\\*\\*\\*\\*\\*\\*\\* Round(.*)\\*\\*\\*$",
+		"$"+SCRIPT_NAME+".stunRoundMarker",false,false,false,null, Font.PLAIN);
+	// Just an informative echo
+	clientGUI.printText("general", HEADER+BOLD+WHITE+"Stun Reporter loaded"+RESET+"\n");
+}
+
+
+void stunCapture() {
+	String _mobName = vars.get(1);
+	String _stunString = vars.get(5);
+	String _stunLevel;
+	String _testLevel = stunNames.get(_mobName);
+	if (_testLevel == null) {
+		_testLevel = "0";
+	}
+	if (_stunString == null) {
+		_stunLevel = "0";
+	} else if (_stunString.equals("stunned")) {
+		_stunLevel = "1";
+	} else if (_stunString.equals("Stunned")) {
+		_stunLevel = "3";
+	} else if (_stunString.equals("STUNNED")) {
+		_stunLevel = "5";
+	} else if (_stunString.equals("*STUNNED*")) {
+		_stunLevel = "6";
+	} else {
+		_stunLevel = "0";
+	}
+	stunNames.put(_mobName, _stunLevel);
+	if (!_stunLevel.equals(_testLevel)) {
+		if (NEWROUND) {
+			int _stunInt = Integer.parseInt(_stunLevel);
+			if (_stunInt > 0) {
+				clientGUI.doCommand("@party report " + _mobName + " is " + _stunString + " (Level " + _stunLevel + ")");
+			} else {
+				clientGUI.doCommand("@party report " + _mobName + " is no longer stunned!");
+				stunNames.remove(_mobName);
+			}
+		}
+	}
+	NEWROUND = false;
+}
+
+void stunDead() {
+	String _mobName = vars.get(1);
+	if (stunNames.get(_mobName) != null) {
+		stunNames.remove(_mobName);
+	}
+}
+
+void stunRoundMarker() {
+	NEWROUND = true;
+}
+
+

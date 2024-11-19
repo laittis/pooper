@@ -1,0 +1,29 @@
+SCRIPT_NAME = "gag.bcs";
+SCRIPT_DESC = "A couple of simple gags";
+// Change this to true to disable the gags.
+SCRIPT_OFF = false;
+
+void bootup() {
+// Gag the pcity healing crystal
+  triggerManager.newTrigger("gag_crystal",
+    "The crystal throbs faintly, healing some of your wounds.",
+    "", true, false, false,
+    null, Font.PLAIN);
+
+// Uncomment this to gag the failed dropping of small coins
+//  triggerManager.newTrigger("gag_crapcoindrop",
+//    "You have nothing called \'(silver|bronze|copper|tin|zinc|mowgles)\'!",
+//    "", true, false, false,
+//    null, Font.PLAIN);
+
+// Gag the useless SAVED. message
+  triggerManager.newTrigger("gag_saved",
+    "SAVED.",
+    "", true, false, false,
+    null, Font.PLAIN);
+// Gag the empathy spam from eating
+  triggerManager.newTrigger("gag_empathysatiate",
+    "You feel that .* is satiated.",
+    "", true, false, false,
+    null, Font.PLAIN);
+}

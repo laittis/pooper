@@ -1,0 +1,165 @@
+SCRIPT_NAME = "mage_analyse";
+SCRIPT_DESC = "Reports analysis of magic lore messages to party report channel along with dcrits, devas and essence gain.";
+SCRIPT_OFF = false;
+
+////////////////////////////////////////////////////////////////////////
+//  Analysis of magic lore triggerset by Wermine
+////////////////////////////////////////////////////////////////////////
+// Reports following with the resist:
+// Damage criticality
+// Devastate (on a separate line unfortunately)
+// Mage essence gain
+
+// Approved by Era
+
+//global variables
+mage_analyse_TARGET="";
+mage_analyse_DCRIT="";
+mage_analyse_RESIST="";
+mage_analyse_TYPE="";
+mage_analyse_ESSE="";
+
+void bootup() {
+  triggerManager.newTrigger("mage_analyse_reset",
+    "^You are done with the chant.$",
+    "$"+SCRIPT_NAME+".mage_analyse_reset");  
+
+  triggerManager.newTrigger("mage_analyse_essence",
+    "^You feel your skills in handling elemental forces improve.$",
+    "$"+SCRIPT_NAME+".mage_analyse_essence");
+
+  triggerManager.newTrigger("mage_analyse_dcrit1",
+    "^You feel like your spell gained additional power.$",
+    "$"+SCRIPT_NAME+".mage_analyse_dcrit1");
+
+  triggerManager.newTrigger("mage_analyse_dcrit2",
+    "^You feel like you managed to channel additional POWER to your spell.$",
+    "$"+SCRIPT_NAME+".mage_analyse_dcrit2");
+
+  triggerManager.newTrigger("mage_analyse_dcrit3",
+    "^Your fingertips are surrounded with swirling ENERGY as you cast the spell.$",
+    "$"+SCRIPT_NAME+".mage_analyse_dcrit3");
+
+  triggerManager.newTrigger("mage_analyse_dcrit4",
+    "^Unseen BURSTS of magic are absorbed into the spell!$",
+    "$"+SCRIPT_NAME+".mage_analyse_dcrit4");
+
+  triggerManager.newTrigger("mage_analyse_deva",
+    "^You devastate ([ A-ZDEVa-zde',._-]+)'s mind with your powers!$",
+    "$"+SCRIPT_NAME+".mage_analyse_deva");
+
+  triggerManager.newTrigger("mage_analyse_typeandname",
+    "^You watch with self-pride as your ([ A-ZDEVa-zde',._-]+) hits ([ A-ZDEVa-zde',._-]+).$",
+    "$"+SCRIPT_NAME+".mage_analyse_typeandname");
+
+   triggerManager.newTrigger("mage_analyse_typeandname2",
+     "^You crush ([ A-ZDEVa-zde',._-]+)'s mind with your psychic attack!$",
+     "$"+SCRIPT_NAME+".mage_analyse_typeandname2");
+
+  triggerManager.newTrigger("screami",
+    "^([ A-ZDEVa-zde',._-]+) screams in pain.$",
+    "$"+SCRIPT_NAME+".screami");
+
+  triggerManager.newTrigger("writhei",
+    "^([ A-ZDEVa-zde',._-]+) writhes in agony.$",
+    "$"+SCRIPT_NAME+".writhei");
+     
+  triggerManager.newTrigger("shudderi",
+    "^([ A-ZDEVa-zde',._-]+) shudders from the force of the attack.$",
+    "$"+SCRIPT_NAME+".shudderi");
+     
+  triggerManager.newTrigger("grunti",
+    "^([ A-ZDEVa-zde',._-]+) grunts from the pain.$",
+    "$"+SCRIPT_NAME+".grunti");
+     
+  triggerManager.newTrigger("wincei",
+    "^([ A-ZDEVa-zde',._-]+) winces a little from the pain.$",
+    "$"+SCRIPT_NAME+".wincei");
+     
+  triggerManager.newTrigger("shrugi",
+    "^([ A-ZDEVa-zde',._-]+) shrugs off the attack.$",
+    "$"+SCRIPT_NAME+".shrugi");
+}
+
+void mage_analyse_essence() {
+  mage_analyse_ESSE="- Essence improved! ";
+}
+void mage_analyse_dcrit1() {
+  mage_analyse_DCRIT="DCRIT-1 ";
+}
+void mage_analyse_dcrit2() {
+  mage_analyse_DCRIT="DCRIT-2 ";
+}
+void mage_analyse_dcrit3() {
+  mage_analyse_DCRIT="DCRIT-3 ";
+}
+void mage_analyse_dcrit4() {
+  mage_analyse_DCRIT="U-N-S-E-E-N-! ";
+}
+void mage_analyse_deva() {
+  clientGUI.doCommand("@@party report "+mage_analyse_TARGET+" devastated!");
+}
+void mage_analyse_typeandname() {
+  mage_analyse_TARGET=vars.get(2);
+
+  if ( vars.get(1).equals("thron spray") || vars.get(1).equals("poison blast") || vars.get(1).equals("venom strike") || vars.get(1).equals("power blast") || vars.get(1).equals("summon carnal spores") ) {
+    mage_analyse_TYPE="poison ";
+  } 
+  else if ( vars.get(1).equals("golden arrow") || vars.get(1).equals("summon greater spores") || vars.get(1).equals("levin bolt") || vars.get(1).equals("summon lesser spores") || vars.get(1).equals("magic missile") ) {
+    mage_analyse_TYPE="mana ";
+  }
+  else if ( vars.get(1).equals("acid blast") || vars.get(1).equals("acid ray") || vars.get(1).equals("acid arrow") || vars.get(1).equals("acid wind") || vars.get(1).equals("disruption") ) {
+    mage_analyse_TYPE="acid ";
+  }
+  else if ( vars.get(1).equals("blast vacuum") || vars.get(1).equals("strangulation") || vars.get(1).equals("chaos bolt") || vars.get(1).equals("suffocation") || vars.get(1).equals("vacuumbolt") ) {
+    mage_analyse_TYPE="asph ";
+  }
+  else if ( vars.get(1).equals("cold ray") || vars.get(1).equals("icebolt") || vars.get(1).equals("darkfire") || vars.get(1).equals("flaming ice") || vars.get(1).equals("chill touch") ) {
+    mage_analyse_TYPE="cold ";
+  }
+  else if ( vars.get(1).equals("electrocution") || vars.get(1).equals("forked lightning") || vars.get(1).equals("blast lightning") || vars.get(1).equals("lightning bolt") || vars.get(1).equals("shocking grasp") ) {
+    mage_analyse_TYPE="elec ";
+  }
+  else if ( vars.get(1).equals("lava blast") || vars.get(1).equals("meteor blast") || vars.get(1).equals("fire blast") || vars.get(1).equals("firebolt") || vars.get(1).equals("flame arrow") ) {
+    mage_analyse_TYPE="fire ";
+  }
+}
+void mage_analyse_typeandname2() {
+  mage_analyse_TARGET=vars.get(1);
+  mage_analyse_TYPE="psi ";
+}
+void screami() {
+  mage_analyse_RESIST="0%";
+  mage_analyse_reportti();
+}
+void writhei() {
+  mage_analyse_RESIST="20%";
+  mage_analyse_reportti();
+}
+void shudderi() {
+  mage_analyse_RESIST="40%";
+  mage_analyse_reportti();
+}
+void grunti() {
+  mage_analyse_RESIST="60%";
+  mage_analyse_reportti();
+}
+void wincei() {
+  mage_analyse_RESIST="80%";
+  mage_analyse_reportti();
+}
+void shrugi() {
+  mage_analyse_RESIST="100%";
+  mage_analyse_reportti();
+}
+void mage_analyse_reportti() {
+  clientGUI.doCommand("@@party report "+mage_analyse_TARGET+" resists "+mage_analyse_RESIST+" "+mage_analyse_TYPE+mage_analyse_DCRIT+mage_analyse_ESSE);
+}
+void mage_analyse_reset() {
+//Reset all variables (especially important for dcrit and essence)
+  mage_analyse_TARGET="target";
+  mage_analyse_DCRIT="";
+  mage_analyse_RESIST="";
+  mage_analyse_TYPE="";
+  mage_analyse_ESSE="";
+}

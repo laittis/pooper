@@ -1,0 +1,151 @@
+SCRIPT_NAME = "pp_colorline";
+SCRIPT_DESC = "Alternate colors on party prots line by line";
+SCRIPT_OFF = false;
+
+// Borrowed heavily from Glaurung on toggling triggers on and off
+// easily.
+//
+// ... this means I totally ripped it off from him!
+//
+// Inline ANSI codes are my own idea though, so nyah!
+//
+// Original idea due to Ewige losing track of who had what prot and asking for something
+// like this.
+//
+// --Hair
+//
+
+import com.mythicscape.batclient.interfaces.*;
+
+Trigger start;
+Trigger line1;
+Trigger line2;
+Trigger line3;
+Trigger end;
+boolean pppEnabled;
+
+// ANSI color codes
+// These are here to be able to do inline color changes without having to do stupid batclient
+// syntax with no support for background colors!
+// If you use this be sure to have RESET at the end, otherwise you'll suffer color bleed
+String RESET 		= "\u001b[0m";
+String BOLD 		= "\u001b[1m";
+String BLACK 		= "\u001b[30m";
+String RED 		= "\u001b[31m";
+String GREEN 		= "\u001b[32m";
+String YELLOW 		= "\u001b[33m";
+String BLUE 		= "\u001b[34m";
+String MAGENTA 		= "\u001b[35m";
+String CYAN 		= "\u001b[36m";
+String WHITE 		= "\u001b[37m";
+String BGBLACK 		= "\u001b[40m";
+String BGRED 		= "\u001b[41m";
+String BGGREEN 		= "\u001b[42m";
+String BGYELLOW 	= "\u001b[43m";
+String BGBLUE 		= "\u001b[44m";
+String BGMAGENTA	= "\u001b[45m";
+String BGCYAN 		= "\u001b[46m";
+String BGWHITE 		= "\u001b[47m";
+
+// Set preferred colors from list above.
+String ALITE = WHITE;
+String BLITE = BGWHITE+BLACK;
+
+String LINECOLOR = ALITE;
+
+void bootup() {
+	start = triggerManager.newTrigger("pp_startline",
+		"^([ ]{1,20})([,]*)([-+]*)\\.$",
+		"$"+SCRIPT_NAME+".pp_startline",true,false,false,null,Font.PLAIN);
+
+	line1 = triggerManager.newTrigger("pp_protline",
+		"^ ([ ]*)([A-z \\|]*)\\|$",
+		"$"+SCRIPT_NAME+".pp_protline",true,false,false,null,Font.PLAIN);
+
+	line2 = triggerManager.newTrigger("pp_topline",
+		"^,([-]{1,20})([-+]*)\\+$",
+		"$"+SCRIPT_NAME+".pp_topline",true,false,false,null,Font.PLAIN);
+
+	line3 = triggerManager.newTrigger("pp_nameline",
+		"^\\|([A-z +]*)([Xh0-9 :\\|]*)\\|$",
+		"$"+SCRIPT_NAME+".pp_nameline",true,false,false,null,Font.PLAIN);
+
+	end = triggerManager.newTrigger("pp_endline",
+		"^`([-]{2,20})([-+]*)'$",
+		"$"+SCRIPT_NAME+".pp_endline",true,false,false,null,Font.PLAIN);
+
+	clientGUI.doCommand("/alias ppp=$pp_colorline");
+	enable();
+}
+
+void pp_startline() {
+	clientGUI.printText("general", vars.get(0) + "", false);
+	LINECOLOR = ALITE;
+}
+
+void pp_topline() {
+	clientGUI.printText("general", vars.get(0) + "", false);
+}
+
+void pp_protline() {
+	clientGUI.printText("general", " " + vars.get(1) + vars.get(2) + "|\n", false);
+}
+
+void pp_nameline() {
+	clientGUI.printText("general", LINECOLOR + "|" + vars.get(1) + vars.get(2) + "|" + RESET + "\n", false);
+	if (LINECOLOR.equals(ALITE)) {
+		LINECOLOR = BLITE;
+	} else {
+		LINECOLOR = ALITE;
+	}
+}
+
+void pp_endline() {
+	clientGUI.printText("general", "`" + vars.get(1) + vars.get(2) + "'\n", false);
+	LINECOLOR = ALITE;
+}
+
+enable() {
+	clientGUI.printText("general", BOLD + GREEN + "ENABLING " + RESET + YELLOW + "party prots display" + RESET + "\n");
+	start.setActive(true);
+	line1.setActive(true);
+	line2.setActive(true);
+	line3.setActive(true);
+	end.setActive(true);
+	pppEnabled = true;
+}
+
+disable() {
+	clientGUI.printText("general", BOLD + WHITE + "DISABLING " + RESET + YELLOW + "party prots display" + RESET + "\n");
+	start.setActive(false);
+	line1.setActive(false);
+	line2.setActive(false);
+	line3.setActive(false);
+	end.setActive(false);
+	pppEnabled = false;
+}
+
+void run(){
+	if (argument == null) {
+		clientGUI.printText("general", BOLD + MAGENTA + "'ppp on' to enable or 'ppp off' to disable." + RESET + "\n");
+		clientGUI.printText("general", BOLD + MAGENTA + "Script is currently " + RESET);
+		if (pppEnabled) {
+			clientGUI.printText("general", BOLD + GREEN + "ENABLED" + RESET + "\n");
+		} else {
+			clientGUI.printText("general", BOLD + WHITE + "DISABLED" + RESET + "\n");
+		}
+	} else if (argument.equals("on")) {
+		enable();
+	} else if (argument.equals("off")) {
+		disable();
+	} else {
+		clientGUI.printText("general", BOLD + MAGENTA + "'ppp on' to enable or 'ppp off' to disable." + RESET + "\n");
+		clientGUI.printText("general", BOLD + MAGENTA + "Script is currently " + RESET);
+		if (pppEnabled) {
+			clientGUI.printText("general", BOLD + GREEN + "ENABLED" + RESET + "\n");
+		} else {
+			clientGUI.printText("general", BOLD + WHITE + "DISABLED" + RESET + "\n");
+		}
+	}
+}
+

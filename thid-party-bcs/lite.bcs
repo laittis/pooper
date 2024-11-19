@@ -1,0 +1,226 @@
+SCRIPT_NAME = "lite.bcs";
+SCRIPT_DESC = "A couple of simple lites";
+SCRIPT_OFF = false;
+
+// Color definitions, do not remove.
+Color blue = new Color(0, 0, 177);
+Color dkindigo = new Color(0, 127, 127);
+Color dktyellow = new Color(127, 127, 0);
+Color green = new Color(0, 127, 0);
+Color indigo = new Color(0, 255, 255);
+Color light_blue = new Color(0, 0, 255);
+Color light_gray = new Color(192, 192, 192);
+Color light_green = new Color(0, 255, 0);
+Color light_magenta = new Color(255, 0, 255);
+Color light_red = new Color(255, 0, 0);
+Color light_yellow = new Color(255, 255, 127);
+Color magenta = new Color(127, 0, 127);
+Color red = new Color(127, 0, 0);
+Color white = new Color(255, 255, 255);
+Color yellow = new Color(255, 255, 0);
+Color bold = new Color(255,255,255);
+
+// Configurations for various colourings, feel free to edit
+Color shape_ex   = green;
+Color shape_good = green;
+Color shape_sh   = yellow;
+Color shape_nh   = yellow;
+Color shape_nigs = yellow;
+Color shape_bs   = red;
+Color shape_vbs  = red;
+Color shape_nd   = red;
+
+Color stun = magenta;
+
+void bootup() {
+
+// Sample file for various lites
+
+// Channel lites (Just one as a sample, feel free to add more)
+/*
+  triggerManager.newTrigger("lite_sales",
+    "([\\[{(<]sales[\\]})>]:)",
+    "", false, false, true,
+    new Color[]{blue}, Font.PLAIN);
+*/
+
+// Shape Lites  (works bit funny with nigs)
+  triggerManager.newTrigger("shape_ex",
+    "is (in excellent shape)",
+    "", false, false, true,
+    new Color[]{shape_ex}, Font.PLAIN);
+  triggerManager.newTrigger("shape_good",
+    "is (in a good shape)",
+    "", false, false, true,
+    new Color[]{shape_good}, Font.PLAIN);
+  triggerManager.newTrigger("shape_sh",
+    "is (slightly hurt)",
+    "", false, false, true,
+    new Color[]{shape_sh}, Font.PLAIN);
+  triggerManager.newTrigger("shape_nh",
+    "is (noticeably hurt)",
+    "", false, false, true,
+    new Color[]{shape_nh}, Font.PLAIN);
+  triggerManager.newTrigger("shape_nigs",
+    "is (not in a good shape)",
+    "", false, false, true,
+    new Color[]{shape_nigs}, Font.PLAIN);
+  triggerManager.newTrigger("shape_bs",
+    "is (in bad shape)",
+    "", false, false, true,
+    new Color[]{shape_bs}, Font.PLAIN);
+  triggerManager.newTrigger("shape_vbs",
+    "is (in very bad shape)",
+    "", false, false, true,
+    new Color[]{shape_vbs}, Font.PLAIN);
+  triggerManager.newTrigger("shape_nd",
+    "is (near death)",
+    "", false, false, true,
+    new Color[]{shape_nd}, Font.PLAIN);
+
+
+// Misc lites
+  triggerManager.newTrigger("robinhoodarrives",
+    "^Robin Hood arrives from the shadows, as merrily as ever.$",
+    "", false, true, false,
+    new Color[]{red}, Font.PLAIN);
+  triggerManager.newTrigger("acquires",
+    "^[A-ZÄÅÖa-zäåö',._ -]+ acquires ([^;]) from you!$",
+    "", false, true, false,
+    new Color[]{red}, Font.PLAIN);
+  triggerManager.newTrigger("lite_spstore_partialfail",
+    "^Your body is unable to handle all of the influx of magical energy.$",
+    "", false, true, false,
+    new Color[]{bold}, Font.PLAIN);
+  triggerManager.newTrigger("lite_spstore_fail",
+    "^Your depleted body cannot handle any of the influx of magical energy.$",
+    "", false, true, false,
+    new Color[]{bold}, Font.PLAIN);
+
+// Extra lites if you drop something due extra weight
+  triggerManager.newTrigger("droppas",
+    "( is too heavy for you to carry.)",
+    "", false, false, true,
+    new Color[]{magenta}, Font.PLAIN);
+
+// Alerting Lites
+  triggerManager.newTrigger("lite_wod",
+    " (monster eq) explodes into a burst of sparks!$",
+    "", false, true, false,
+    new Color[]{red}, Font.PLAIN);
+  triggerManager.newTrigger("lite_mindseize",
+    " is stunned from the intrusion into .* mind.$",
+    "", false, true, false,
+    new Color[]{stun}, Font.PLAIN);
+  triggerManager.newTrigger("lite_claw_other",
+    "'s face contorts in pain and .* falls to .* knees!$",
+    "", false, true, false,
+    new Color[]{stun}, Font.PLAIN);
+  triggerManager.newTrigger("litestunned",
+    "( (STUNNED|STUN) )",
+    "", false, false, true,
+    new Color[]{stun}, Font.PLAIN);
+  triggerManager.newTrigger("critlite",
+    "(^(Grinning|Smiling|Cackling) (diabolically|devilishly|demonically))",
+    "", false, false, true,
+    new Color[]{red}, Font.PLAIN);
+
+  triggerManager.newTrigger("liteexhausted",
+    "You are so exhausted\\.",
+    "", false, true, false,
+    new Color[]{red}, Font.PLAIN);
+  triggerManager.newTrigger("liteisfull",
+    " is too full, and ",
+    "", false, true, false,
+    new Color[]{red}, Font.PLAIN);
+  triggerManager.newTrigger("liteburnsyou",
+    "The water BURNS your skin.",
+    "", false, true, false,
+    new Color[]{red}, Font.PLAIN);
+  triggerManager.newTrigger("litewaterhere",
+    "(The still water here is)",
+    "", false, false, true,
+    new Color[]{blue}, Font.PLAIN);
+  triggerManager.newTrigger("litethirsty",
+    "( (THIRSTY!|thirsty) )",
+    "", false, false, true,
+    new Color[]{red}, Font.PLAIN);
+  triggerManager.newTrigger("litefamished",
+    "( (DEHYDRATED|DEHYDRATING|FAMISHED) )",
+    "", false, false, true,
+    new Color[]{red}, Font.PLAIN);
+
+// Beneficial or Indifferent Lites
+  triggerManager.newTrigger("acceptlite",
+    "^([A-z]*) accepts (.*) from you\\.",
+    "", false, true, false,
+    new Color[]{red}, Font.PLAIN);
+  triggerManager.newTrigger("godlypr",
+    "You feel a godly presence*",
+    "", false, true, false,
+    new Color[]{green}, Font.PLAIN);
+  triggerManager.newTrigger("godlyproff",
+    "You feel the godly effects withdraw*",
+    "", false, true, false,
+    new Color[]{red}, Font.PLAIN);
+  triggerManager.newTrigger("autoimprovelite",
+    "You feel like you just got slightly better*",
+    "", false, true, false,
+    new Color[]{green}, Font.PLAIN);
+  triggerManager.newTrigger("criticallite",
+    "You score a CRITICAL hit!*",
+    "", false, true, false,
+    new Color[]{green}, Font.PLAIN);
+  triggerManager.newTrigger("critical2lite",
+    "You score a \\*CRITICAL\\* hit!*",
+    "", false, true, false,
+    new Color[]{green}, Font.PLAIN);
+  triggerManager.newTrigger("hurtconfusedlite",
+    "seems hurt and confused",
+    "", false, true, false,
+    new Color[]{green}, Font.PLAIN);
+
+// Mixed Lites
+  triggerManager.newTrigger("paralyzelite",
+    "( paralyzes )",
+    "", false, false, true,
+    new Color[]{red}, Font.PLAIN);
+  triggerManager.newTrigger("poisonlite",
+    "(POISON)",
+    "", false, false, true,
+    new Color[]{red}, Font.PLAIN);
+  triggerManager.newTrigger("unccilite",
+    "(unconsciousness|unconscious)",
+    "", false, false, true,
+    new Color[]{red}, Font.PLAIN);
+  triggerManager.newTrigger("offulite",
+    "(offensive (spell|skill))",
+    "", false, false, true,
+    new Color[]{red}, Font.PLAIN);
+  triggerManager.newTrigger("agrotuslite",
+    " is disturbed by",
+    "", false, true, false,
+    new Color[]{red}, Font.PLAIN);
+  triggerManager.newTrigger("agrotuslite2",
+    "got mad at",
+    "", false, true, false,
+    new Color[]{red}, Font.PLAIN);
+  triggerManager.newTrigger("lite_entropy",
+    "(vaka vanha vainamoinen|vaka tosi vanha vainamoinen)",
+    "", false, false, true,
+    new Color[]{red}, Font.PLAIN);
+  triggerManager.newTrigger("somedest",
+    " the magic words \'(se on sarki nyt|rikki ja poikki)\'$",
+    "", false, true, false,
+    new Color[]{red}, Font.PLAIN);
+  triggerManager.newTrigger("ekudamaa",
+    "^Your (.*) gets damaged; it's now in (.*) condition.$",
+    "", false, true, false,
+    new Color[]{red}, Font.PLAIN);
+  triggerManager.newTrigger("ekuprotdown",
+    " loses its tangerine glow.$",
+    "", false, true, false,
+    new Color[]{red}, Font.PLAIN);
+
+  clientGUI.printText("generic", "LOADED: lite trigs, edit the file lite.bcs to configure the colours.\n");
+}
