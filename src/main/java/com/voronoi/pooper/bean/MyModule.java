@@ -29,6 +29,50 @@ public abstract class MyModule {
     }
 
     /**
+     * Update a trigger with the module
+     * @param trigger
+     */
+    public void updateTrigger(MyTrigger trigger) {
+        MyTrigger oldTrigger = findTriggerByName(trigger.getName());
+        if (oldTrigger != null) {
+            oldTrigger.setRegexp(trigger.getRegexp());
+            oldTrigger.setTriggerBody(trigger.getTriggerBody());
+            oldTrigger.setAction(trigger.isAction());
+            oldTrigger.setGag(trigger.isGag());
+        } else {
+            triggers.add(trigger);
+        }
+    }
+
+    public void unregisterTrigger(MyTrigger trigger) {
+        MyTrigger oldTrigger = findTriggerByName(trigger.getName());
+        if (oldTrigger != null) {
+            triggers.remove(oldTrigger);
+        }
+    }
+
+    public void unregisterTrigger(String name) {
+        MyTrigger oldTrigger = findTriggerByName(name);
+        if (oldTrigger != null) {
+            triggers.remove(oldTrigger);
+        }
+    }
+
+    /**
+     * Find a trigger by name
+     * @param name
+     * @return
+     */
+    private MyTrigger findTriggerByName(String name) {
+        for (MyTrigger trigger : triggers) {
+            if (trigger.getName().equals(name)) {
+                return trigger;
+            }
+        }
+        return null;
+    }
+
+    /**
      * List of triggers for the module
      * @return List of triggers
      */

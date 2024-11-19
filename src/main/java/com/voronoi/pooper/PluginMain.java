@@ -2,13 +2,11 @@ package com.voronoi.pooper;
 
 import com.mythicscape.batclient.interfaces.*;
 import com.voronoi.pooper.bean.MyModule;
-import com.voronoi.pooper.manager.MessageManager;
-import com.voronoi.pooper.manager.ModuleManager;
-import com.voronoi.pooper.manager.SettingsManager;
-import com.voronoi.pooper.manager.TriggerProcessor;
+import com.voronoi.pooper.manager.*;
 import com.voronoi.pooper.module.CoreModule;
 import com.voronoi.pooper.module.CoreSkillModule;
 import com.voronoi.pooper.module.CoreSpellModule;
+import com.voronoi.pooper.module.CoreMonsterModule;
 import com.voronoi.pooper.util.TextUtil;
 
 import java.awt.event.ActionEvent;
@@ -38,6 +36,8 @@ public class PluginMain extends BatClientPlugin implements ActionListener, BatCl
         //Message manager
         MessageManager.getInstance().setPlugin(this);
 
+        MonsterManager.getInstance();
+
         // Trigger management
         triggerProcessor = TriggerProcessor.getInstance();
         ModuleManager moduleManager = ModuleManager.getInstance();
@@ -54,6 +54,10 @@ public class PluginMain extends BatClientPlugin implements ActionListener, BatCl
         MyModule CoreSpellModule = new CoreSpellModule();
         CoreSpellModule.init();
         moduleManager.registerModule(CoreSpellModule);
+
+        MyModule CoreMonsterModule = new CoreMonsterModule();
+        CoreMonsterModule.init();
+        moduleManager.registerModule(CoreMonsterModule);
 
         // Load all modules
         SettingsManager.getInstance().load(getBaseDirectory());

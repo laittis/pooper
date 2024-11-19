@@ -36,8 +36,8 @@ public class TriggerProcessor {
         List<MyTrigger> triggers = ModuleManager.getInstance().getAllEnabledTriggers(TriggerType.SCREEN);
 
         for (MyTrigger trigger : triggers) {
-            String textToMatch = trigger.isExpand() ? parsedResult.getOriginalText() : parsedResult.getStrippedText();
-            Matcher matcher = trigger.matcher(textToMatch);
+            //String textToMatch = trigger.isExpand() ? parsedResult.getOriginalText() : parsedResult.getStrippedText();
+            Matcher matcher = trigger.matcher(parsedResult);
             if (matcher.find()) {
                 trigger.getTriggerBody().body(batClientPlugin, matcher);
                 if (trigger.isGag()) {

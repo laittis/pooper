@@ -1,17 +1,19 @@
 package com.voronoi.pooper.bean;
 
+import com.mythicscape.batclient.interfaces.ParsedResult;
+
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 public class MyTrigger {
     private String name;
     private String description;
-    private final Pattern pattern;
-    private final TriggerBody triggerBody;
-    private final boolean isAction;
-    private final boolean isGag;
-    private final boolean isExpand; // Use original text if true
-    private final TriggerType triggerType;
+    private Pattern pattern;
+    private TriggerBody triggerBody;
+    private boolean isAction;
+    private boolean isGag;
+    private boolean isExpand; // Use original text if true
+    private TriggerType triggerType;
 
     /**
      * Constructor for MyTrigger
@@ -44,6 +46,14 @@ public class MyTrigger {
         return pattern.matcher(s);
     }
 
+    public Matcher matcher(ParsedResult parsedResult) {
+        if (isExpand) {
+            return pattern.matcher(parsedResult.getOriginalText());
+        } else {
+            return pattern.matcher(parsedResult.getStrippedText());
+        }
+    }
+
     /**
      * Get the name of the trigger
      * @return String
@@ -58,6 +68,14 @@ public class MyTrigger {
      */
     public String getDescription() {
         return description;
+    }
+
+    /**
+     * Get the regular expression of the trigger
+     * @return String
+     */
+    public String getRegexp() {
+        return pattern.pattern();
     }
 
     /**
@@ -99,4 +117,29 @@ public class MyTrigger {
     public TriggerType getTriggerType() {
         return triggerType;
     }
+
+    public void setName(String name) {
+        this.name = name;
+    }
+
+    public void setDescription(String description) {
+        this.description = description;
+    }
+
+    public void setRegexp(String regexp) {
+        this.pattern = Pattern.compile(regexp);
+    }
+
+    public void setTriggerBody(TriggerBody triggerBody) {
+        this.triggerBody = triggerBody;
+    }
+
+    public void setAction(boolean isAction) {
+        this.isAction = isAction;
+    }
+
+    public void setGag(boolean isGag) {
+        this.isGag = isGag;
+    }
+
 }
