@@ -23,7 +23,7 @@ public class TriggerProcessor {
         for (MyTrigger trigger : triggers) {
             Matcher matcher = trigger.matcher(input);
             if (matcher.matches()) {
-                trigger.getTriggerBody().body(batClientPlugin, matcher);
+                trigger.getTriggerBody().body(batClientPlugin, matcher, null);
                 if (trigger.isGag()) {
                     return ""; // Gag the command input
                 }
@@ -36,10 +36,9 @@ public class TriggerProcessor {
         List<MyTrigger> triggers = ModuleManager.getInstance().getAllEnabledTriggers(TriggerType.SCREEN);
 
         for (MyTrigger trigger : triggers) {
-            //String textToMatch = trigger.isExpand() ? parsedResult.getOriginalText() : parsedResult.getStrippedText();
             Matcher matcher = trigger.matcher(parsedResult);
             if (matcher.find()) {
-                trigger.getTriggerBody().body(batClientPlugin, matcher);
+                trigger.getTriggerBody().body(batClientPlugin, matcher, parsedResult);
                 if (trigger.isGag()) {
                     parsedResult.setStrippedText(""); // Gag the parsed result
                     parsedResult.setOriginalText(""); // Gag the parsed result

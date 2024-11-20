@@ -1,11 +1,14 @@
 package com.voronoi.pooper.bean;
 
+import com.voronoi.pooper.annotation.Save;
+
 import java.util.ArrayList;
 import java.util.List;
 
 public abstract class MyModule {
     private final String name;
     private final String description;
+    @Save
     private boolean enabled;
     protected final List<MyTrigger> triggers = new ArrayList<>();
 

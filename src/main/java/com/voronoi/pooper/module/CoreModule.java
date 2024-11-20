@@ -22,7 +22,7 @@ public class CoreModule extends MyModule {
                 "pooperCommand",
                 "Handles the main 'pooper' command and its subcommands.",
                 "^pooper(?:\\s+(help|enable|disable)(?:\\s+(\\w+))?)?$",
-                (batClientPlugin, matcher) -> {
+               (batClientPlugin, matcher, parsedResult) -> {
                     String subCommand = matcher.group(1);
                     String moduleName = matcher.group(2);
 

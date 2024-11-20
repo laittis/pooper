@@ -23,7 +23,7 @@ public class MyTrigger {
      * @param triggerBody Body of the trigger
      * @param isAction Whether the trigger is an action
      * @param isGag Whether the trigger is a gag
-     * @param isExpand Whether the trigger should use the original text
+     * @param isExpand Whether the trigger should use the original text with ansi codes
      * @param triggerType Type of the trigger
      */
     public MyTrigger(String name, String description, String regexp, TriggerBody triggerBody, boolean isAction, boolean isGag, boolean isExpand, TriggerType triggerType) {

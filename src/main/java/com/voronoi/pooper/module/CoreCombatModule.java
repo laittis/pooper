@@ -24,7 +24,7 @@ public class CoreCombatModule extends MyModule {
                 "combatRound",
                 "Triggered at the start of each combat round.",
                 "^\\*{10,25} (Round \\d+|Round \\d+ \\(\\d+\\)) \\*{10,25}$",
-                (batClientPlugin, matcher) -> {
+                (batClientPlugin, matcher, parsedResult) -> {
                     // if round 1 then onCombatStart
                     if (matcher.group(1).contains("Round 1")) {
                         CombatTracker.onCombatStart();
@@ -40,7 +40,7 @@ public class CoreCombatModule extends MyModule {
                 "combatEnd",
                 "Triggered at the end of combat.",
                 "^You are not in combat right now\\.$",
-                (batClientPlugin, matcher) -> {
+                (batClientPlugin, matcher, parsedResult) -> {
                     CombatTracker.onCombatEnd();
                 },
                 false, false, false, TriggerType.SCREEN
@@ -53,7 +53,7 @@ public class CoreCombatModule extends MyModule {
                 "combatTarget",
                 "Triggered when you target a new enemy.",
                 "^You are now targetting ([A-Za-z ,.'-]+)\\.$",
-                (batClientPlugin, matcher) -> {
+                (batClientPlugin, matcher, parsedResult) -> {
                     CombatTracker.onCombatTarget(matcher.group(1));
                 },
                 false, false, false, TriggerType.SCREEN

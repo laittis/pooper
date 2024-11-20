@@ -39,7 +39,7 @@ public class CoreSkillModule extends MyModule {
                 "skillReport",
                 "pooper skill report - toggles skill report on/off",
                 "^pooper skill report$",
-                (batClientPlugin, matcher) -> {
+                (batClientPlugin, matcher, parsedResult) -> {
                     skillTracker.toggleSkillReport();
                 },
                 true, true, false, TriggerType.COMMAND
@@ -55,7 +55,7 @@ public class CoreSkillModule extends MyModule {
                 "skillConceal",
                 "Triggered when a skill is concealed.",
                 "^You surreptitiously conceal your skill use\\.$",
-                (batClientPlugin, matcher) -> {
+                (batClientPlugin, matcher, parsedResult) -> {
                     skillTracker.onSkillConceal();
                 },
                 false, true, false, TriggerType.SCREEN
@@ -70,7 +70,7 @@ public class CoreSkillModule extends MyModule {
                 "castInfoSkill",
                 "Triggered when a skill is used and cast info is displayed.",
                 "^You are using \\'([a-z ]+)\\'.$",
-                (batClientPlugin, matcher) -> {
+                (batClientPlugin, matcher, parsedResult) -> {
                     skillTracker.setSkill(matcher.group(1), null);
                 },
                 false, true, false, TriggerType.SCREEN
@@ -80,7 +80,7 @@ public class CoreSkillModule extends MyModule {
                 "castInfoSkill",
                 "Triggered when a skill is used and cast info is displayed.",
                 "^You are using \\'([a-z ]+)\\' at \\'(.+?)\\'.$",
-                (batClientPlugin, matcher) -> {
+                (batClientPlugin, matcher, parsedResult) -> {
                     skillTracker.setSkill(matcher.group(1), matcher.group(2));
                 },
                 false, true, false, TriggerType.SCREEN
@@ -95,7 +95,7 @@ public class CoreSkillModule extends MyModule {
                 "skillStart",
                 "Triggered when a skill starts.",
                 "^You start concentrating on the skill\\.$",
-                (batClientPlugin, matcher) -> {
+                (batClientPlugin, matcher, parsedResult) -> {
                     skillTracker.onSkillStart();
                     batClientPlugin.getClientGUI().doCommand("@@cast info");
                 },
@@ -111,7 +111,7 @@ public class CoreSkillModule extends MyModule {
                 "skillEnd",
                 "Triggered when a skill ends.",
                 "^You are prepared to do the skill\\.$",
-                (batClientPlugin, matcher) -> {
+                (batClientPlugin, matcher, parsedResult) -> {
                     skillTracker.onSkillEnd();
                 },
                 false, true, false, TriggerType.SCREEN
@@ -140,7 +140,7 @@ public class CoreSkillModule extends MyModule {
                 "skillInterrupt",
                 "Triggered when a skill is interrupted.",
                 "^(Your movement prevents you from doing the skill|You lose your concentration and cannot do the skill)\\.$",
-                (batClientPlugin, matcher) -> {
+                (batClientPlugin, matcher, parsedResult) -> {
                     skillTracker.onSkillInterrupt();
                 },
                 false, true, false, TriggerType.SCREEN
@@ -155,7 +155,7 @@ public class CoreSkillModule extends MyModule {
                 "skillStopped1",
                 "Triggered when a skill is stopped.",
                 "^You (decide to change the skill to (a )?new one|stop concentrating on the skill and begin searching for a proper place to rest)\\.$",
-                (batClientPlugin, matcher) -> {
+                (batClientPlugin, matcher, parsedResult) -> {
                     skillTracker.onSkillStopped();
                 },
                 false, true, false, TriggerType.SCREEN
@@ -165,7 +165,7 @@ public class CoreSkillModule extends MyModule {
                 "skillStopped2",
                 "Triggered when a skill is stopped.",
                 "^You break your skill attempt\\.$",
-                (batClientPlugin, matcher) -> {
+                (batClientPlugin, matcher, parsedResult) -> {
                     skillTracker.onSkillStopped();
                 },
                 false, true, false, TriggerType.SCREEN

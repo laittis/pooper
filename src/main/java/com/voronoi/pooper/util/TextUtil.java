@@ -1,6 +1,10 @@
 package com.voronoi.pooper.util;
 
 import com.mythicscape.batclient.interfaces.BatClientPlugin;
+import com.mythicscape.batclient.interfaces.ParsedResult;
+
+import java.awt.*;
+import java.awt.font.TextAttribute;
 
 public class TextUtil {
 
@@ -79,4 +83,43 @@ public class TextUtil {
         return sb.toString();
     }
 
+    /**
+     * Appends text to the ParsedResult and applies color attributes.
+     *
+     * @param parsedResult     The ParsedResult to modify.
+     * @param text             The text to append.
+     * @param innerColor       The color for the inner text.
+     * @param controlCharColor The color for control characters.
+     */
+    public static void appendText(ParsedResult parsedResult, String text, Color innerColor, Color controlCharColor) {
+        String currentText = parsedResult.getStrippedText();
+
+        // Remove any trailing whitespace or linebreaks
+        currentText = currentText.replaceAll("\\s+$", "");
+
+        int baseIndex = currentText.length();
+        String modifiedText = currentText + text;
+        parsedResult.setStrippedText(modifiedText);
+
+        int index = baseIndex;
+        while (index < modifiedText.length()) {
+            char c = modifiedText.charAt(index);
+            if ("()[]{},.'".indexOf(c) >= 0) {
+                // Control character
+                parsedResult.addAttribute(TextAttribute.FOREGROUND, controlCharColor, index, index + 1);
+                index++;
+            } else if (Character.isWhitespace(c)) {
+                // Skip whitespace
+                index++;
+            } else {
+                // Regular text
+                int start = index;
+                while (index < modifiedText.length() && " ()[]{},.'\n".indexOf(modifiedText.charAt(index)) == -1) {
+                    index++;
+                }
+                int end = index;
+                parsedResult.addAttribute(TextAttribute.FOREGROUND, innerColor, start, end);
+            }
+        }
+    }
 }

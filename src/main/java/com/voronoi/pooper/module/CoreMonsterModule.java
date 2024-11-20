@@ -7,6 +7,10 @@ import com.voronoi.pooper.bean.MyTrigger;
 import com.voronoi.pooper.bean.TriggerType;
 import com.voronoi.pooper.manager.MessageManager;
 import com.voronoi.pooper.manager.MonsterManager;
+import com.voronoi.pooper.util.TextUtil;
+
+import java.awt.*;
+import java.awt.font.TextAttribute;
 
 
 public class CoreMonsterModule extends MyModule {
@@ -25,7 +29,7 @@ public class CoreMonsterModule extends MyModule {
                 "monsterCommand",
                 "Handles the 'pooper monster' module commands and its subcommands.",
                 "^pooper monster(?:\\s+(view|add|addshort|remove|query|list)(?:\\s+(\\w+)(?:\\s+(\\w+))?)?)?$",
-                (batClientPlugin, matcher) -> {
+                (batClientPlugin, matcher, parsedResult) -> {
                     String subCommand = matcher.group(1);  // Main subcommand
                     String arg1 = matcher.group(2);        // First argument (e.g., long name or monster name)
                     String arg2 = matcher.group(3);        // Second argument (e.g., short name)
@@ -91,17 +95,20 @@ public class CoreMonsterModule extends MyModule {
     private void registerMonsterRoomTrigger() {
 
         // Register the trigger
+        // Supporting 'ansi theme' a and c, didn't bother to add more, I think most use 'a' anyways.
         registerTrigger(new MyTrigger(
                 "monsterInRoom",
                 "Handles the monster room trigger.",
                 "^\u001b\\[(1;31m|1;32m|35m)([A-Za-z0-9, '\\s-()<>-]+)\u001b\\[0m$",
-                (batClientPlugin, matcher) -> {
+                (batClientPlugin, matcher, parsedResult) -> {
                     // if match 1 is 1;31m, then it's an aggressive monster
                     // if match 1 is 1;32m, then it's a regular monster
                     if (matcher.group(1).equals("1;31m")) {
-                        MessageManager.getInstance().printMessage("Aggressive Monster: " + matcher.group(2));
+                        // aggressive monster
+                        TextUtil.appendText(parsedResult, " (aggressive)\n", Color.RED, Color.WHITE);
                     } else if (matcher.group(1).equals("1;32m") || matcher.group(1).equals("35m")) {
-                        MessageManager.getInstance().printMessage("Regular Monster: " + matcher.group(2));
+                        // regular monster
+                        TextUtil.appendText(parsedResult, " (normal)\n", Color.GREEN, Color.WHITE);
                     }
                 },
                 false, // isAction
